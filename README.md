@@ -36,10 +36,10 @@ Wireframes y guía de estilo en [Figma](https://www.figma.com/design/MMwruC6KJkD
 Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 
 <p align="center">
-  <img src="assets/Fixly%20-%20Wireframes/M1%20%C2%B7%20Mis%20alertas.png" width="200" alt="Wireframe de mis alertas" />
-  <img src="assets/Fixly%20-%20Wireframes/M2%20%C2%B7%20Nueva%20alerta.png" width="200" alt="Wireframe de nueva alerta" />
-  <img src="assets/Fixly%20-%20Wireframes/E2%20%C2%B7%20Detalle%20y%20gesti%C3%B3n.png" width="200" alt="Wireframe de detalle y gestión" />
-  <img src="assets/Fixly%20-%20Wireframes/A2%20%C2%B7%20Verificar%20cierre.png" width="200" alt="Wireframe de verificación de cierre" />
+  <img src="docs/wireframes/M1-Mis-alertas.png" width="200" alt="Wireframe de mis alertas" />
+  <img src="docs/wireframes/M2-Nueva-alerta.png" width="200" alt="Wireframe de nueva alerta" />
+  <img src="docs/wireframes/E2-Detalle-y-gesti%C3%B3n.png" width="200" alt="Wireframe de detalle y gestión" />
+  <img src="docs/wireframes/A2-Verificar-cierre.png" width="200" alt="Wireframe de verificación de cierre" />
 </p>
 
 ## Stack tecnológico
