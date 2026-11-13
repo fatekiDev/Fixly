@@ -36,10 +36,22 @@ Wireframes y guía de estilo en [Figma](https://www.figma.com/design/MMwruC6KJkD
 Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 
 <p align="center">
-  <img src="docs/wireframes/M1-Mis-alertas.png" width="200" alt="Wireframe de mis alertas" />
-  <img src="docs/wireframes/M2-Nueva-alerta.png" width="200" alt="Wireframe de nueva alerta" />
-  <img src="docs/wireframes/E2-Detalle-y-gesti%C3%B3n.png" width="200" alt="Wireframe de detalle y gestión" />
-  <img src="docs/wireframes/A2-Verificar-cierre.png" width="200" alt="Wireframe de verificación de cierre" />
+  <img src="docs/wireframes/Gu%C3%ADa-de-estilo.png" width="280" alt="Guía de estilo" />
+  <img src="docs/wireframes/L1-Iniciar-sesion.png" width="150" alt="Iniciar sesión" />
+  <img src="docs/wireframes/R1-Crear-cuenta.png" width="150" alt="Crear cuenta" />
+</p>
+<p align="center">
+  <img src="docs/wireframes/M1-Mis-alertas.png" width="150" alt="Mis alertas" />
+  <img src="docs/wireframes/M2-Nueva-alerta.png" width="150" alt="Nueva alerta" />
+  <img src="docs/wireframes/M3-Detalle-de-alerta.png" width="150" alt="Detalle de alerta para miembro" />
+  <img src="docs/wireframes/M4-Perfil-y-puntos.png" width="150" alt="Perfil y puntos" />
+</p>
+<p align="center">
+  <img src="docs/wireframes/E1-Bandeja-de-alertas.png" width="150" alt="Bandeja de alertas para encargado" />
+  <img src="docs/wireframes/E2-Detalle-y-gesti%C3%B3n.png" width="150" alt="Detalle y gestión para encargado" />
+  <img src="docs/wireframes/E3-Bitacora.png" width="150" alt="Bitácora del encargado" />
+  <img src="docs/wireframes/A1-Moderacion.png" width="150" alt="Moderación para administrador" />
+  <img src="docs/wireframes/A2-Verificar-cierre.png" width="150" alt="Verificar cierre" />
 </p>
 
 ## Stack tecnológico
@@ -54,32 +66,34 @@ Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 
 ## Estado del proyecto
 
-- [ ] Migrar la base móvil actual de Flutter a React Native + Expo
-- [ ] Configurar Expo Go para visualizar la app durante el desarrollo
-- [ ] Implementar navegación y login con roles (datos de prueba)
+- [x] Migrar la base móvil de Flutter a React Native + Expo
+- [x] Configurar Expo Go para visualizar la app durante el desarrollo
+- [x] Implementar navegación, registro y login con roles (datos de prueba)
 - [x] Wireframes y guía de estilo en Figma
-- [ ] Aplicar la paleta visual en React Native
-- [ ] Pantallas del miembro (lista, crear alerta con cámara, detalle, perfil)
+- [x] Aplicar la paleta visual en React Native
+- [x] Pantallas del miembro (lista, crear alerta con cámara, detalle, perfil)
+- [x] Flujo local del encargado (bandeja, atención y bitácora)
+- [x] Moderación de publicaciones y revisión de cierres por administrador
+- [x] Sistema de puntos local de demostración
 - [ ] Backend con Node + Express + MongoDB
 - [ ] Autenticación real (JWT) y roles
-- [ ] Flujo del encargado y bitácora
-- [ ] Módulo de moderación del administrador
-- [ ] Sistema de puntos
 - [ ] Notificaciones push
+
+Los flujos actuales usan cuentas y datos de prueba en memoria; los cambios se reinician al recargar la app. Aún no están conectados al backend.
 
 ## Estructura del repositorio
 
 ```
 Fixly/
-├── mobile/     # App móvil React Native + Expo (migración pendiente)
-├── backend/    # API REST (próximamente)
+├── mobile/     # App móvil React Native + Expo
+├── backend/    # API REST (por implementar)
 ├── docs/       # Wireframes, guía de diseño y bitácora
 └── README.md
 ```
 
 ## Cómo correr la app
 
-La carpeta `mobile/` todavía contiene el proyecto Flutter existente. Cuando se complete la migración a React Native + Expo, se podrá iniciar la vista de desarrollo así:
+La app móvil usa React Native, Expo y Expo Router. Para iniciar el servidor de desarrollo:
 
 ```bash
 git clone <url-del-repositorio>
@@ -90,7 +104,7 @@ npx expo start
 
 Escanea el código QR con Expo Go para visualizar la app en un dispositivo, o elige un emulador desde la terminal.
 
-Cuentas de prueba temporales (clave `1234`), cuando el login esté implementado: `miembro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`.
+Cuentas de prueba temporales (clave `1234`): `miembro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`.
 
 ## Contexto
 
