@@ -40,7 +40,8 @@
           "cameraPermission": "Fixly necesita acceso a la cámara para fotografiar una avería.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

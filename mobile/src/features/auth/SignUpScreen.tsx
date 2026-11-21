@@ -25,8 +25,10 @@ export function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
+    if (isSubmitting) return;
     setError("");
 
     if (!name.trim() || !email.trim() || !password || !confirmation) {
@@ -49,8 +51,11 @@ export function SignUpScreen() {
       return;
     }
 
-    if (!signUp(name, email, password)) {
-      setError("Ya existe una cuenta con ese correo.");
+    setIsSubmitting(true);
+    const signUpError = await signUp(name, email, password);
+    setIsSubmitting(false);
+    if (signUpError) {
+      setError(signUpError);
       return;
     }
 

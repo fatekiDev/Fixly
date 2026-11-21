@@ -75,18 +75,19 @@ Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 - [x] Flujo local del encargado (bandeja, atención y bitácora)
 - [x] Moderación de publicaciones y revisión de cierres por administrador
 - [x] Sistema de puntos local de demostración
-- [ ] Backend con Node + Express + MongoDB
-- [ ] Autenticación real (JWT) y roles
+- [x] API backend con Node + Express + MongoDB
+- [x] Autenticación JWT y permisos por rol en la API
+- [x] Conectar la autenticación y las alertas móviles a la API
 - [ ] Notificaciones push
 
-Los flujos actuales usan cuentas y datos de prueba en memoria; los cambios se reinician al recargar la app. Aún no están conectados al backend.
+La API implementa cuentas, alertas, moderación, revisión de cierres y puntos. La app móvil ya guarda el JWT de forma segura, restaura la sesión y consume las alertas desde el backend. Las notificaciones push siguen pendientes.
 
 ## Estructura del repositorio
 
 ```
 Fixly/
 ├── mobile/     # App móvil React Native + Expo
-├── backend/    # API REST (por implementar)
+├── backend/    # API REST con Node.js, Express y MongoDB
 ├── docs/       # Wireframes, guía de diseño y bitácora
 └── README.md
 ```
@@ -105,6 +106,10 @@ npx expo start
 Escanea el código QR con Expo Go para visualizar la app en un dispositivo, o elige un emulador desde la terminal.
 
 Cuentas de prueba temporales (clave `1234`): `miembro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`.
+
+### Backend API
+
+Consulta la [guía del backend](backend/README.md) para configurar MongoDB, iniciar la API y crear cuentas de encargado o administrador. En esta etapa, la API aún no está conectada a la app móvil.
 
 ## Contexto
 

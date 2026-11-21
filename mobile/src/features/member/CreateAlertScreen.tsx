@@ -38,21 +38,29 @@ export function CreateAlertScreen() {
   const [area, setArea] = useState<AlertArea>("Mantenimiento");
   const [urgency, setUrgency] = useState<AlertUrgency>("medium");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!user) {
     return <Redirect href="/" />;
   }
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    if (isSubmitting) return;
     if (!title.trim() || !description.trim()) {
       setError("Completá el título y la descripción para publicar.");
       return;
     }
 
-    const alert = createAlert(
+    setIsSubmitting(true);
+    const alert = await createAlert(
       { title: title.trim(), description: description.trim(), area, urgency, photoUri: photoUri ?? undefined },
       user,
     );
+    setIsSubmitting(false);
+    if (!alert) {
+      setError("No pudimos publicar la alerta. Revisá tu conexión e intentá nuevamente.");
+      return;
+    }
     router.replace({ pathname: "/member/alert/[id]", params: { id: alert.id } });
   };
 

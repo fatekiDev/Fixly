@@ -2,7 +2,11 @@ import { Redirect } from "expo-router";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 export function HomeScreen() {
-  const { user } = useAuth();
+  const { user, isRestoring } = useAuth();
+
+  if (isRestoring) {
+    return null;
+  }
 
   if (!user) {
     return <Redirect href="/" />;

@@ -26,8 +26,10 @@ export function SignInScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
+    if (isSubmitting) return;
     setError("");
     setNotice("");
 
@@ -36,8 +38,11 @@ export function SignInScreen() {
       return;
     }
 
-    if (!signIn(email, password)) {
-      setError("El correo o la contraseña no son correctos.");
+    setIsSubmitting(true);
+    const signInError = await signIn(email, password);
+    setIsSubmitting(false);
+    if (signInError) {
+      setError(signInError);
       return;
     }
 

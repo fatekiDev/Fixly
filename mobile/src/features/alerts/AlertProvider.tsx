@@ -2,18 +2,20 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type PropsWithChildren,
 } from "react";
 import type { AuthUser } from "@/data/mockUsers";
 import {
-  MOCK_ALERTS,
   type AlertArea,
   type AlertStatus,
   type AlertUrgency,
   type IssueAlert,
 } from "@/data/mockAlerts";
+import { apiRequest } from "@/features/api/apiClient";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 type NewAlertInput = {
   title: string;
@@ -25,110 +27,191 @@ type NewAlertInput = {
 
 type AlertContextValue = {
   alerts: IssueAlert[];
-  createAlert: (input: NewAlertInput, reporter: AuthUser) => IssueAlert;
-  acceptAlert: (id: string, manager: AuthUser) => void;
-  releaseAlert: (id: string, managerId: string) => void;
-  resolveAlert: (id: string, managerId: string, evidenceUri?: string) => void;
-  moderateAlert: (id: string, valid: boolean) => void;
-  reviewClosure: (id: string, approved: boolean) => void;
+  isLoading: boolean;
+  error: string;
+  refreshAlerts: () => Promise<void>;
+  createAlert: (input: NewAlertInput, reporter: AuthUser) => Promise<IssueAlert | null>;
+  acceptAlert: (id: string, manager: AuthUser) => Promise<void>;
+  releaseAlert: (id: string, managerId: string) => Promise<void>;
+  resolveAlert: (id: string, managerId: string, evidenceUri?: string) => Promise<void>;
+  moderateAlert: (id: string, valid: boolean) => Promise<void>;
+  reviewClosure: (id: string, approved: boolean) => Promise<void>;
   getPoints: (userId: string) => number;
 };
 
 const AlertContext = createContext<AlertContextValue | undefined>(undefined);
 const INITIAL_POINTS: Record<string, number> = { "demo-member": 90 };
 
+type AlertRecord = Record<string, unknown>;
+
 export function AlertProvider({ children }: PropsWithChildren) {
-  const [alerts, setAlerts] = useState<IssueAlert[]>(MOCK_ALERTS);
+  const { user, isRestoring } = useAuth();
+  const [alerts, setAlerts] = useState<IssueAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const createAlert = useCallback((input: NewAlertInput, reporter: AuthUser) => {
-    const alert: IssueAlert = {
-      ...input,
-      id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      reporterId: reporter.id,
-      reporterName: reporter.name,
-      status: "new",
-      moderationStatus: "pending",
-      location: "Ubicación por informar",
-      building: "Universidad",
-      createdAt: Date.now(),
+  const mapAlert = useCallback((item: AlertRecord): IssueAlert => {
+    const createdAtValue = item.createdAt;
+    return {
+      id: String(item.id),
+      title: String(item.title),
+      description: String(item.description),
+      reporterId: String(item.reporterId),
+      reporterName: String(item.reporterName ?? "Reportante"),
+      area: item.area as AlertArea,
+      urgency: item.urgency as AlertUrgency,
+      status: item.status as AlertStatus,
+      moderationStatus: item.moderationStatus as IssueAlert["moderationStatus"],
+      location: String(item.location),
+      building: String(item.building),
+      createdAt:
+        typeof createdAtValue === "number"
+          ? createdAtValue
+          : new Date(String(createdAtValue)).getTime(),
+      managerId: item.managerId ? String(item.managerId) : undefined,
+      managerName: item.managerName ? String(item.managerName) : undefined,
+      photoUri: item.photoUrl ? String(item.photoUrl) : undefined,
+      evidenceUri: item.evidenceUrl ? String(item.evidenceUrl) : undefined,
     };
-
-    setAlerts((currentAlerts) => [alert, ...currentAlerts]);
-    return alert;
   }, []);
 
-  const acceptAlert = useCallback((id: string, manager: AuthUser) => {
-    setAlerts((currentAlerts) =>
-      currentAlerts.map((alert) =>
-        alert.id === id && alert.status === "new"
-          ? {
-              ...alert,
-              status: "in_progress",
-              managerId: manager.id,
-              managerName: manager.name,
-            }
-          : alert,
-      ),
-    );
-  }, []);
-
-  const releaseAlert = useCallback((id: string, managerId: string) => {
-    setAlerts((currentAlerts) =>
-      currentAlerts.map((alert) =>
-        alert.id === id && alert.status === "in_progress" && alert.managerId === managerId
-          ? {
-              ...alert,
-              status: "new",
-              managerId: undefined,
-              managerName: undefined,
-            }
-          : alert,
-      ),
-    );
-  }, []);
-
-  const resolveAlert = useCallback(
-    (id: string, managerId: string, evidenceUri?: string) => {
-      setAlerts((currentAlerts) =>
-        currentAlerts.map((alert) =>
-          alert.id === id &&
-          alert.status === "in_progress" &&
-          alert.managerId === managerId
-            ? { ...alert, status: "awaiting_review", evidenceUri }
-            : alert,
-        ),
+  const refreshAlerts = useCallback(async () => {
+    if (!user) {
+      setAlerts([]);
+      return;
+    }
+    setIsLoading(true);
+    setError("");
+    try {
+      const response = await apiRequest<{ alerts: AlertRecord[] }>("/api/alerts");
+      setAlerts(response.alerts.map(mapAlert));
+    } catch (refreshError) {
+      setError(
+        refreshError instanceof Error
+          ? refreshError.message
+          : "No pudimos cargar las alertas.",
       );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [mapAlert, user]);
+
+  useEffect(() => {
+    if (!isRestoring) {
+      queueMicrotask(() => {
+        void refreshAlerts();
+      });
+    }
+  }, [isRestoring, refreshAlerts]);
+
+  const createAlert = useCallback(
+    async (input: NewAlertInput, _reporter: AuthUser) => {
+      try {
+        const photoUrl =
+          input.photoUri && /^https?:\/\//i.test(input.photoUri)
+            ? input.photoUri
+            : undefined;
+        const response = await apiRequest<{ alert: AlertRecord }>("/api/alerts", {
+          method: "POST",
+          body: {
+            title: input.title,
+            description: input.description,
+            area: input.area,
+            urgency: input.urgency,
+            location: "Ubicación por informar",
+            building: "Universidad",
+            ...(photoUrl ? { photoUrl } : {}),
+          },
+        });
+        const alert = mapAlert(response.alert);
+        setAlerts((currentAlerts) => [alert, ...currentAlerts]);
+        return alert;
+      } catch (createError) {
+        setError(
+          createError instanceof Error
+            ? createError.message
+            : "No pudimos publicar la alerta.",
+        );
+        return null;
+      }
     },
-    [],
+    [mapAlert],
   );
 
-  const moderateAlert = useCallback((id: string, valid: boolean) => {
-    setAlerts((currentAlerts) =>
-      currentAlerts.map((alert) =>
-        alert.id === id && alert.moderationStatus === "pending"
-          ? {
-              ...alert,
-              moderationStatus: valid ? "approved" : "declined",
-              status: valid ? alert.status : "declined",
-            }
-          : alert,
-      ),
-    );
-  }, []);
+  const acceptAlert = useCallback(
+    async (id: string, _manager: AuthUser) => {
+      try {
+        await apiRequest(`/api/alerts/${id}/accept`, { method: "POST" });
+        await refreshAlerts();
+      } catch (actionError) {
+        setError(actionError instanceof Error ? actionError.message : "No pudimos aceptar la alerta.");
+      }
+    },
+    [refreshAlerts],
+  );
 
-  const reviewClosure = useCallback((id: string, approved: boolean) => {
-    setAlerts((currentAlerts) =>
-      currentAlerts.map((alert) =>
-        alert.id === id && alert.status === "awaiting_review"
-          ? { ...alert, status: approved ? "approved" : "in_progress" }
-          : alert,
-      ),
-    );
-  }, []);
+  const releaseAlert = useCallback(
+    async (id: string, _managerId: string) => {
+      try {
+        await apiRequest(`/api/alerts/${id}/release`, { method: "POST" });
+        await refreshAlerts();
+      } catch (actionError) {
+        setError(actionError instanceof Error ? actionError.message : "No pudimos liberar la alerta.");
+      }
+    },
+    [refreshAlerts],
+  );
+
+  const resolveAlert = useCallback(
+    async (id: string, _managerId: string, evidenceUri?: string) => {
+      const evidenceUrl =
+        evidenceUri && /^https?:\/\//i.test(evidenceUri) ? evidenceUri : undefined;
+      try {
+        await apiRequest(`/api/alerts/${id}/resolve`, {
+          method: "POST",
+          body: evidenceUrl ? { evidenceUrl } : {},
+        });
+        await refreshAlerts();
+      } catch (actionError) {
+        setError(actionError instanceof Error ? actionError.message : "No pudimos resolver la alerta.");
+      }
+    },
+    [refreshAlerts],
+  );
+
+  const moderateAlert = useCallback(
+    async (id: string, valid: boolean) => {
+      try {
+        await apiRequest(`/api/alerts/${id}/moderation`, {
+          method: "POST",
+          body: { valid },
+        });
+        await refreshAlerts();
+      } catch (actionError) {
+        setError(actionError instanceof Error ? actionError.message : "No pudimos moderar la alerta.");
+      }
+    },
+    [refreshAlerts],
+  );
+
+  const reviewClosure = useCallback(
+    async (id: string, approved: boolean) => {
+      try {
+        await apiRequest(`/api/alerts/${id}/review`, {
+          method: "POST",
+          body: { approved },
+        });
+        await refreshAlerts();
+      } catch (actionError) {
+        setError(actionError instanceof Error ? actionError.message : "No pudimos revisar el cierre.");
+      }
+    },
+    [refreshAlerts],
+  );
 
   const getPoints = useCallback(
     (userId: string) =>
-      (INITIAL_POINTS[userId] ?? 0) +
+      (INITIAL_POINTS[userId] ?? 90) +
       alerts.filter(
         (alert) => alert.reporterId === userId && alert.status === "approved",
       ).length *
@@ -139,6 +222,9 @@ export function AlertProvider({ children }: PropsWithChildren) {
   const value = useMemo(
     () => ({
       alerts,
+      isLoading,
+      error,
+      refreshAlerts,
       createAlert,
       acceptAlert,
       releaseAlert,
@@ -149,6 +235,9 @@ export function AlertProvider({ children }: PropsWithChildren) {
     }),
     [
       alerts,
+      isLoading,
+      error,
+      refreshAlerts,
       createAlert,
       acceptAlert,
       releaseAlert,
@@ -164,11 +253,9 @@ export function AlertProvider({ children }: PropsWithChildren) {
 
 export function useAlerts() {
   const context = useContext(AlertContext);
-
   if (!context) {
     throw new Error("useAlerts debe usarse dentro de AlertProvider.");
   }
-
   return context;
 }
 
@@ -180,6 +267,5 @@ export function getAlertStatusLabel(status: AlertStatus) {
     approved: "Aprobada",
     declined: "Declinada",
   };
-
   return labels[status];
 }

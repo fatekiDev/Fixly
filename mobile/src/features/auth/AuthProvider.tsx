@@ -4,74 +4,103 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
   type PropsWithChildren,
 } from "react";
-import { MOCK_ACCOUNTS, type AuthUser, type MockAccount } from "@/data/mockUsers";
+import type { AuthUser } from "@/data/mockUsers";
+import { apiRequest, getStoredToken, setStoredToken } from "@/features/api/apiClient";
 
 type AuthContextValue = {
   user: AuthUser | null;
-  signIn: (email: string, password: string) => boolean;
-  signUp: (name: string, email: string, password: string) => boolean;
-  signOut: () => void;
+  isRestoring: boolean;
+  signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (name: string, email: string, password: string) => Promise<string | null>;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [accounts, setAccounts] = useState<MockAccount[]>(MOCK_ACCOUNTS);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    getStoredToken()
+      .then((token) => {
+        if (!token) return null;
+        return apiRequest<{ user: AuthUser }>("/api/auth/me", { token });
+      })
+      .then((result) => {
+        if (mounted && result) setUser(result.user);
+      })
+      .catch(async () => {
+        await setStoredToken(null);
+      })
+      .finally(() => {
+        if (mounted) setIsRestoring(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const signIn = useCallback(
-    (email: string, password: string) => {
+    async (email: string, password: string) => {
       const normalizedEmail = email.trim().toLowerCase();
-      const account = accounts.find(
-        (candidate) =>
-          candidate.user.email === normalizedEmail && candidate.password === password,
-      );
-
-      if (!account) {
-        return false;
+      try {
+        const result = await apiRequest<{ token: string; user: AuthUser }>(
+          "/api/auth/login",
+          {
+            method: "POST",
+            token: null,
+            body: { email: normalizedEmail, password },
+          },
+        );
+        await setStoredToken(result.token);
+        setUser(result.user);
+        return null;
+      } catch (error) {
+        return error instanceof Error
+          ? error.message
+          : "No pudimos iniciar sesión.";
       }
-
-      setUser(account.user);
-      return true;
     },
-    [accounts],
+    [],
   );
 
   const signUp = useCallback(
-    (name: string, email: string, password: string) => {
+    async (name: string, email: string, password: string) => {
       const normalizedEmail = email.trim().toLowerCase();
-      const emailAlreadyExists = accounts.some(
-        (account) => account.user.email === normalizedEmail,
-      );
-
-      if (emailAlreadyExists) {
-        return false;
+      try {
+        const result = await apiRequest<{ token: string; user: AuthUser }>(
+          "/api/auth/register",
+          {
+            method: "POST",
+            token: null,
+            body: { name: name.trim(), email: normalizedEmail, password },
+          },
+        );
+        await setStoredToken(result.token);
+        setUser(result.user);
+        return null;
+      } catch (error) {
+        return error instanceof Error
+          ? error.message
+          : "No pudimos crear tu cuenta.";
       }
-
-      const newUser: AuthUser = {
-        id: normalizedEmail,
-        name: name.trim(),
-        email: normalizedEmail,
-        role: "member",
-      };
-
-      setAccounts((currentAccounts) => [
-        ...currentAccounts,
-        { user: newUser, password },
-      ]);
-      setUser(newUser);
-      return true;
     },
-    [accounts],
+    [],
   );
 
-  const signOut = useCallback(() => setUser(null), []);
+  const signOut = useCallback(async () => {
+    await setStoredToken(null);
+    setUser(null);
+  }, []);
 
   const value = useMemo(
-    () => ({ user, signIn, signUp, signOut }),
-    [user, signIn, signUp, signOut],
+    () => ({ user, isRestoring, signIn, signUp, signOut }),
+    [user, isRestoring, signIn, signUp, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
