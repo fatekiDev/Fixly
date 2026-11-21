@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "17481041150",
+    "project_id": "fixly-41bd1",
+    "storage_bucket": "fixly-41bd1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17481041150:android:613e0c1770bd21cadc11af",
+        "android_client_info": {
+          "package_name": "com.fixly.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAguuGHOjgl0pIUaIOLrgM6mqydqaKHJZc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,5 @@
 import { Redirect, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "@/components/AppScreen";
 import { AppTabs, type AppTab } from "@/components/AppTabs";
 import { ScreenTitle } from "@/components/ScreenTitle";
@@ -21,9 +21,16 @@ export function AdminProfileScreen() {
     return <Redirect href="/home" />;
   }
 
-  const handleSignOut = () => {
-    signOut();
-    router.replace("/");
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace("/");
+    } catch (error) {
+      Alert.alert(
+        "No pudimos cerrar sesión",
+        error instanceof Error ? error.message : "Inténtalo nuevamente.",
+      );
+    }
   };
 
   return (

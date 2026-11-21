@@ -63,7 +63,7 @@ Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 | Base de datos | MongoDB local (Docker) / MongoDB Atlas |
 | Visualización durante el desarrollo | Expo Go |
 | Fotos de alertas | Subida multipart autenticada (JPG, PNG, WebP) |
-| Notificaciones | Push (pendiente) |
+| Notificaciones | Expo Push Service |
 
 ## Estado del proyecto
 
@@ -80,9 +80,11 @@ Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 - [x] Autenticación JWT y permisos por rol en la API
 - [x] Conectar la autenticación y las alertas móviles a la API
 - [x] Subir y mostrar fotos con permisos autenticados
-- [ ] Notificaciones push
+- [x] Implementar registro de dispositivos y avisos push para los flujos principales
+- [x] Configurar FCM para Android y generar un development build
+- [ ] Instalar el build y verificar la recepción de una notificación en Android
 
-La API implementa cuentas, alertas, moderación, revisión de cierres, puntos e imágenes. La app móvil guarda el JWT de forma segura, restaura la sesión y consume los datos desde el backend. Las notificaciones push siguen pendientes. Las imágenes se guardan localmente en desarrollo; para desplegar se debe configurar almacenamiento persistente/objetos.
+La API implementa cuentas, alertas, moderación, revisión de cierres, puntos, imágenes y envío de notificaciones. La app móvil guarda el JWT de forma segura, registra el token push con la cuenta y abre la alerta correspondiente al tocar una notificación. Android ya tiene FCM configurado y un development build generado; falta instalarlo en un teléfono y confirmar la entrega real. iOS queda pendiente de credenciales APNs y una membresía Apple Developer. Las imágenes se guardan localmente en desarrollo; para desplegar se debe configurar almacenamiento persistente/objetos.
 
 ## Estructura del repositorio
 
@@ -113,6 +115,17 @@ npx expo start
 ```
 
 Escanea el código QR con Expo Go para visualizar la app en un dispositivo. La API y el teléfono deben estar en la misma red Wi-Fi.
+
+### Notificaciones push
+
+Las notificaciones se envían a encargados cuando llega una alerta de su área, al miembro cuando cambia el estado de su alerta y a administración cuando un cierre queda pendiente de revisión. Para habilitar la recepción en un teléfono:
+
+1. Desde `mobile/`, inicia sesión con `npx eas-cli@latest login` y configura el proyecto con `npx eas-cli@latest build:configure --platform android` (o `ios`). EAS vincula el proyecto y genera `eas.json`.
+2. Para Android, crea un proyecto Firebase para `com.fixly.mobile`, descarga `google-services.json` en `mobile/` y configura `android.googleServicesFile` con esa ruta en `app.json`. Sube la clave de cuenta de servicio FCM v1 a las credenciales del proyecto Expo; esa clave privada no debe compartirse ni subirse al repositorio. Para iOS, configura las credenciales de APNs desde el flujo de Expo.
+3. Genera un development build con `npx eas-cli@latest build --profile development --platform android` (o `ios`). EAS entrega un enlace para instalarlo; no se necesita conectar el teléfono por cable.
+4. Instala el build, inicia el servidor con `npx expo start --dev-client`, abre Fixly, inicia sesión y permite notificaciones.
+
+Las notificaciones remotas requieren un development build; Expo Go no las admite en Android. Para iOS se necesita una cuenta Apple Developer para crear las credenciales APNs.
 
 Cuentas de prueba temporales (clave `1234`): `miembro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`.
 

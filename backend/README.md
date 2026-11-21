@@ -79,6 +79,8 @@ Todas las respuestas de error usan `{ "error": "..." }`. Las rutas protegidas re
 |---|---|---|
 | GET | `/api/health/live` | Público |
 | GET | `/api/health` | Público; estado de MongoDB |
+| POST | `/api/push-tokens/register` | Autenticado; registra el token Expo del dispositivo |
+| POST | `/api/push-tokens/unregister` | Autenticado; elimina el token del dispositivo al cerrar sesión |
 | POST | `/api/uploads?kind=report\|evidence` | Miembro o encargado; multipart `file` |
 | GET | `/api/uploads/:id` | Propietario, encargado autorizado o admin |
 | POST | `/api/auth/register` | Público; crea miembro |
@@ -97,6 +99,8 @@ Todas las respuestas de error usan `{ "error": "..." }`. Las rutas protegidas re
 | GET | `/api/alerts/points/:userId` | Dueño o admin |
 
 Las imágenes JPG, PNG y WebP se suben como multipart a `POST /api/uploads?kind=report|evidence` con el campo `file`. El máximo es 5 MB; el servidor valida tipo MIME y firma del archivo, genera un nombre aleatorio, y protege la descarga con autenticación y permisos de alerta. El registro de la alerta recibe el `photoId` retornado por la subida; resolver una alerta requiere el `evidenceId`. Los archivos se guardan en `backend/uploads/`, que está excluido de Git; en producción debe montarse un volumen persistente o reemplazarse por almacenamiento de objetos. Los puntos se calculan a partir de alertas aprobadas (90 iniciales y 10 por cierre aprobado).
+
+La app registra los tokens Expo en la cuenta autenticada y los elimina al cerrar sesión. La API envía avisos mediante Expo Push Service y descarta tokens que Expo reporta como no registrados. Los errores de entrega quedan en el log de la API; no interrumpen la creación o actualización de una alerta.
 
 ## Pruebas
 

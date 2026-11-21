@@ -3,12 +3,14 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   useEffect,
   type PropsWithChildren,
 } from "react";
 import type { AuthUser } from "@/data/mockUsers";
 import { apiRequest, getStoredToken, setStoredToken } from "@/features/api/apiClient";
+import { getExpoPushToken } from "@/features/notifications/pushNotifications";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
+  const pushToken = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -44,6 +47,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (isRestoring || !user) return;
+
+    let active = true;
+    void (async () => {
+      try {
+        const sessionToken = await getStoredToken();
+        if (!sessionToken) return;
+        const expoPushToken = await getExpoPushToken(true);
+        if (!active || !expoPushToken) return;
+        pushToken.current = expoPushToken;
+        await apiRequest("/api/push-tokens/register", {
+          method: "POST",
+          body: { token: expoPushToken },
+          token: sessionToken,
+        });
+      } catch (error) {
+        console.error("No se pudo registrar el dispositivo para notificaciones.", error);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [isRestoring, user]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -94,6 +123,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   );
 
   const signOut = useCallback(async () => {
+    if (pushToken.current) {
+      await apiRequest("/api/push-tokens/unregister", {
+        method: "POST",
+        body: { token: pushToken.current },
+      });
+      pushToken.current = null;
+    }
     await setStoredToken(null);
     setUser(null);
   }, []);

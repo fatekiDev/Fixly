@@ -115,6 +115,39 @@ test("MongoDB-backed auth, permissions, alert workflow, and points", async () =>
   const memberId = registration.data.user.id;
   createdUserIds.push(memberId);
   const memberToken = registration.data.token;
+  const expoPushToken = "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]";
+  const unauthenticatedToken = await api("/api/push-tokens/register", {
+    method: "POST",
+    body: { token: expoPushToken },
+  });
+  assert.equal(unauthenticatedToken.status, 401);
+  const invalidPushToken = await api("/api/push-tokens/register", {
+    method: "POST",
+    token: memberToken,
+    body: { token: "not-an-expo-token" },
+  });
+  assert.equal(invalidPushToken.status, 400);
+  const registeredPushToken = await api("/api/push-tokens/register", {
+    method: "POST",
+    token: memberToken,
+    body: { token: expoPushToken },
+  });
+  assert.equal(registeredPushToken.status, 200);
+  const registeredAgain = await api("/api/push-tokens/register", {
+    method: "POST",
+    token: memberToken,
+    body: { token: expoPushToken },
+  });
+  assert.equal(registeredAgain.status, 200);
+  const profileWithPushToken = await api("/api/auth/me", { token: memberToken });
+  assert.equal("pushTokens" in profileWithPushToken.data.user, false);
+  const unregisteredPushToken = await api("/api/push-tokens/unregister", {
+    method: "POST",
+    token: memberToken,
+    body: { token: expoPushToken },
+  });
+  assert.equal(unregisteredPushToken.status, 200);
+
   const manager = await createPrivilegedUser("manager", "Mantenimiento");
   const otherAreaManager = await createPrivilegedUser("manager", "Aseo");
   const admin = await createPrivilegedUser("admin");

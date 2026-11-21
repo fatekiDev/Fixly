@@ -1,5 +1,5 @@
 import { Redirect, useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { AlertBadge } from "@/components/AlertBadge";
 import { AppScreen } from "@/components/AppScreen";
 import { AppTabs, type AppTab } from "@/components/AppTabs";
@@ -30,9 +30,16 @@ export function ManagerHistoryScreen() {
         alert.status === "declined"),
   );
 
-  const handleSignOut = () => {
-    signOut();
-    router.replace("/");
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace("/");
+    } catch (error) {
+      Alert.alert(
+        "No pudimos cerrar sesión",
+        error instanceof Error ? error.message : "Inténtalo nuevamente.",
+      );
+    }
   };
 
   return (

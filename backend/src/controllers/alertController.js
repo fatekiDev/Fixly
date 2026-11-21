@@ -11,6 +11,7 @@ import {
   resolveAlertSchema,
 } from "../schemas/alertSchemas.js";
 import { closureUpdate, moderationUpdate } from "../domain/alertWorkflow.js";
+import { dispatchPushNotification } from "../services/pushNotifications.js";
 
 function canViewAlert(alert, user) {
   const reporterId = alert.reporterId?._id?.toString() ?? alert.reporterId?.toString();
@@ -115,6 +116,14 @@ export async function createAlert(request, response) {
     moderationStatus: "pending",
   });
   const populated = await populateAlert(Alert.findById(alert.id));
+  await dispatchPushNotification(
+    { role: "manager", area: alert.area },
+    {
+      title: "Nueva alerta para tu área",
+      body: `Hay una nueva alerta en ${alert.area}.`,
+      data: { alertId: alert.id, destination: "manager" },
+    },
+  );
   response.status(201).json({ alert: serializeAlert(populated) });
 }
 
@@ -134,6 +143,14 @@ export async function acceptAlert(request, response) {
   if (!alert) {
     throw new HttpError(409, "La alerta ya no está disponible para aceptar.");
   }
+  await dispatchPushNotification(
+    { _id: alert.reporterId },
+    {
+      title: "Actualización de tu alerta",
+      body: "Un encargado comenzó a atender tu alerta.",
+      data: { alertId: alert.id, destination: "member" },
+    },
+  );
   response.json({ alert: serializeAlert(await populateAlert(Alert.findById(alert.id))) });
 }
 
@@ -146,6 +163,14 @@ export async function releaseAlert(request, response) {
   if (!alert) {
     throw new HttpError(409, "No puedes liberar una alerta que no tienes asignada.");
   }
+  await dispatchPushNotification(
+    { _id: alert.reporterId },
+    {
+      title: "Actualización de tu alerta",
+      body: "Tu alerta volvió a estar pendiente.",
+      data: { alertId: alert.id, destination: "member" },
+    },
+  );
   response.json({ alert: serializeAlert(await populateAlert(Alert.findById(alert.id))) });
 }
 
@@ -172,6 +197,24 @@ export async function resolveAlert(request, response) {
   if (!alert) {
     throw new HttpError(409, "No puedes resolver una alerta que no tienes asignada.");
   }
+  await Promise.all([
+    dispatchPushNotification(
+      { _id: alert.reporterId },
+      {
+        title: "Actualización de tu alerta",
+        body: "Tu alerta fue resuelta y espera revisión.",
+        data: { alertId: alert.id, destination: "member" },
+      },
+    ),
+    dispatchPushNotification(
+      { role: "admin" },
+      {
+        title: "Cierre pendiente de revisión",
+        body: "Hay un cierre de alerta esperando tu revisión.",
+        data: { alertId: alert.id, destination: "admin" },
+      },
+    ),
+  ]);
   response.json({ alert: serializeAlert(await populateAlert(Alert.findById(alert.id))) });
 }
 
@@ -190,6 +233,16 @@ export async function moderateAlert(request, response) {
   if (!alert) {
     throw new HttpError(409, "La publicación fue revisada por otra sesión.");
   }
+  await dispatchPushNotification(
+    { _id: alert.reporterId },
+    {
+      title: "Actualización de tu alerta",
+      body: input.valid
+        ? "Tu alerta fue aprobada para su gestión."
+        : "Tu alerta fue declinada por administración.",
+      data: { alertId: alert.id, destination: "member" },
+    },
+  );
   response.json({ alert: serializeAlert(await populateAlert(Alert.findById(alert.id))) });
 }
 
@@ -208,6 +261,16 @@ export async function reviewClosure(request, response) {
   if (!alert) {
     throw new HttpError(409, "El cierre fue revisado por otra sesión.");
   }
+  await dispatchPushNotification(
+    { _id: alert.reporterId },
+    {
+      title: "Actualización de tu alerta",
+      body: input.approved
+        ? "Administración aprobó el cierre de tu alerta."
+        : "Administración solicitó continuar trabajando en tu alerta.",
+      data: { alertId: alert.id, destination: "member" },
+    },
+  );
   response.json({ alert: serializeAlert(await populateAlert(Alert.findById(alert.id))) });
 }
 

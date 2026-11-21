@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
         return this.role === "manager";
       },
     },
+    pushTokens: { type: [String], default: [], select: false },
   },
   { timestamps: true },
 );
@@ -42,6 +43,7 @@ userSchema.set("toJSON", {
     delete result._id;
     delete result.__v;
     delete result.passwordHash;
+    delete result.pushTokens;
     delete result.createdAt;
     delete result.updatedAt;
     return result;

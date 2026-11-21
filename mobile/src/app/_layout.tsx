@@ -10,6 +10,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AlertProvider } from "@/features/alerts/AlertProvider";
 import { AuthProvider } from "@/features/auth/AuthProvider";
+import { PushNotificationObserver } from "@/components/PushNotificationObserver";
 import { colors } from "@/constants/theme";
 
 export default function RootLayout() {
@@ -36,6 +37,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <AlertProvider>
+          <PushNotificationObserver />
           <Stack
             screenOptions={{
               headerShown: false,
