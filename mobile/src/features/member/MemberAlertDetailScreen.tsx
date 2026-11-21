@@ -84,9 +84,21 @@ function Timeline({ alert }: { alert: IssueAlert }) {
 
   return (
     <View style={styles.timeline}>
-      {steps.map((step) => (
+      {steps.map((step, index) => (
         <View key={step.label} style={styles.timelineRow}>
-          <View style={[styles.dot, step.complete && styles.dotComplete]} />
+          <View style={styles.timelineMarker}>
+            <View style={[styles.dot, step.complete && styles.dotComplete]}>
+              {step.complete ? <Text style={styles.check}>✓</Text> : null}
+            </View>
+            {index < steps.length - 1 ? (
+              <View
+                style={[
+                  styles.connector,
+                  step.complete && steps[index + 1].complete && styles.connectorComplete,
+                ]}
+              />
+            ) : null}
+          </View>
           <Text style={[styles.stepLabel, !step.complete && styles.stepPending]}>
             {step.label}
           </Text>
@@ -174,21 +186,41 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
   timeline: {
-    gap: spacing.md,
     paddingTop: spacing.xs,
   },
   timelineRow: {
     flexDirection: "row",
-    alignItems: "center",
+    minHeight: 44,
+    alignItems: "stretch",
     gap: spacing.sm,
   },
+  timelineMarker: {
+    width: 18,
+    alignItems: "center",
+  },
   dot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 9,
     backgroundColor: "#CBD5E1",
   },
   dotComplete: {
+    backgroundColor: colors.primary,
+  },
+  check: {
+    color: colors.surface,
+    fontFamily: fontFamily.bold,
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  connector: {
+    flex: 1,
+    width: 2,
+    backgroundColor: "#CBD5E1",
+  },
+  connectorComplete: {
     backgroundColor: colors.primary,
   },
   stepLabel: {

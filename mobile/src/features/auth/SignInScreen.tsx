@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthField } from "@/components/AuthField";
 import { BrandHeader } from "@/components/BrandHeader";
-import { InfoBanner } from "@/components/InfoBanner";
 import { PasswordField } from "@/components/PasswordField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { colors, fontFamily, radii, spacing } from "@/constants/theme";
@@ -34,7 +33,7 @@ export function SignInScreen() {
     setNotice("");
 
     if (!email.trim() || !password) {
-      setError("Ingresá tu correo y contraseña para continuar.");
+      setError("Ingresa tu correo y contraseña para continuar.");
       return;
     }
 
@@ -65,7 +64,7 @@ export function SignInScreen() {
           <View style={styles.intro}>
             <Text style={styles.heading}>Qué bueno verte</Text>
             <Text style={styles.subtitle}>
-              Ingresá para seguir tus alertas y novedades.
+              Inicia sesión para seguir tus alertas y novedades.
             </Text>
           </View>
 
@@ -86,7 +85,7 @@ export function SignInScreen() {
               label="Contraseña"
               onChangeText={setPassword}
               onSubmitEditing={handleSignIn}
-              placeholder="Ingresá tu contraseña"
+              placeholder="Ingresa tu contraseña"
               value={password}
             />
 
@@ -106,17 +105,11 @@ export function SignInScreen() {
             <PrimaryButton label="Iniciar sesión" onPress={handleSignIn} />
           </View>
 
-          <InfoBanner title="Un solo acceso para tu comunidad">
-            Miembros, encargados y administradores ingresan con su correo y
-            contraseña. Demo: miembro@fixly.cl, encargado@fixly.cl o
-            admin@fixly.cl · clave: 1234.
-          </InfoBanner>
-
           <View style={styles.footer}>
-            <Text style={styles.footerText}>¿Todavía no tenés cuenta?</Text>
+            <Text style={styles.footerText}>¿Todavía no tienes cuenta?</Text>
             <Link href="/register" asChild>
               <Pressable accessibilityRole="link" hitSlop={8}>
-                <Text style={styles.linkText}>Creá una cuenta</Text>
+                <Text style={styles.linkText}>Crea una cuenta</Text>
               </Pressable>
             </Link>
           </View>

@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "Fixly",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/fixly-logo-cuadrado.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.fixly.mobile",
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/fixly-logo-cuadrado.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -18,25 +18,23 @@
       "package": "com.fixly.mobile",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/fixly-logo-cuadrado.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/fixly-logo-cuadrado.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/fixly-logo-cuadrado.png",
+          "imageWidth": 240
         }
       ],
       [

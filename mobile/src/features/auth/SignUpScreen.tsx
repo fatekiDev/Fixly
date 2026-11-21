@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthField } from "@/components/AuthField";
+import { BrandHeader } from "@/components/BrandHeader";
 import { PasswordField } from "@/components/PasswordField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { colors, fontFamily, radii, spacing } from "@/constants/theme";
@@ -32,12 +33,12 @@ export function SignUpScreen() {
     setError("");
 
     if (!name.trim() || !email.trim() || !password || !confirmation) {
-      setError("Completá todos los campos para crear tu cuenta.");
+      setError("Completa todos los campos para crear tu cuenta.");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError("Ingresá un correo electrónico válido.");
+      setError("Ingresa un correo electrónico válido.");
       return;
     }
 
@@ -73,10 +74,12 @@ export function SignUpScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
+          <BrandHeader />
+
           <View style={styles.intro}>
-            <Text style={styles.heading}>Creá tu cuenta</Text>
+            <Text style={styles.heading}>Crea tu cuenta</Text>
             <Text style={styles.subtitle}>
-              Sumate y ayudá a mejorar tu comunidad.
+              Súmate y ayuda a mejorar tu comunidad.
             </Text>
           </View>
 
@@ -113,12 +116,12 @@ export function SignUpScreen() {
               autoComplete="new-password"
               label="Confirmar contraseña"
               onChangeText={setConfirmation}
-              placeholder="Repetí tu contraseña"
+              placeholder="Repite tu contraseña"
               value={confirmation}
             />
 
             <Text style={styles.terms}>
-              Al crear tu cuenta, aceptás los{" "}
+              Al crear tu cuenta, aceptas los{" "}
               <Text style={styles.termsLink}>Términos de uso</Text> y la{" "}
               <Text style={styles.termsLink}>Política de privacidad</Text>.
             </Text>
@@ -128,10 +131,10 @@ export function SignUpScreen() {
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>¿Ya tenés una cuenta?</Text>
+            <Text style={styles.footerText}>¿Ya tienes una cuenta?</Text>
             <Link href="/" asChild>
               <Pressable accessibilityRole="link" hitSlop={8}>
-                <Text style={styles.linkText}>Iniciá sesión</Text>
+                <Text style={styles.linkText}>Inicia sesión</Text>
               </Pressable>
             </Link>
           </View>

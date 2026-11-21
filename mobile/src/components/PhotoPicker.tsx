@@ -34,19 +34,32 @@ export function PhotoPicker({
         )}
       </View>
       <View style={styles.actions}>
-        <Pressable accessibilityRole="button" onPress={onTakePhoto} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onTakePhoto}
+          hitSlop={8}
+          style={styles.actionButton}
+        >
           <Text style={styles.action}>Tomar foto</Text>
         </Pressable>
-        <Text style={styles.separator}>·</Text>
-        <Pressable accessibilityRole="button" onPress={onChooseFromLibrary} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onChooseFromLibrary}
+          hitSlop={8}
+          style={styles.actionButton}
+        >
           <Text style={styles.action}>Elegir de galería</Text>
         </Pressable>
-        {photoUri && onRemove ? (
-          <Pressable accessibilityRole="button" onPress={onRemove} hitSlop={8}>
-            <Text style={styles.remove}>Quitar</Text>
-          </Pressable>
-        ) : null}
       </View>
+      {photoUri && onRemove ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onRemove}
+          style={styles.removeButton}
+        >
+          <Text style={styles.remove}>Quitar foto</Text>
+        </Pressable>
+      ) : null}
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -79,23 +92,31 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "center",
     gap: spacing.sm,
-    paddingVertical: spacing.xs,
+  },
+  actionButton: {
+    flex: 1,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#B6CCFF",
+    borderRadius: radii.field,
+    backgroundColor: colors.infoBackground,
+    paddingHorizontal: spacing.sm,
   },
   action: {
-    color: colors.primary,
+    color: colors.primaryDark,
     fontFamily: fontFamily.semiBold,
     fontSize: 14,
+    textAlign: "center",
   },
-  separator: {
-    color: colors.textSecondary,
-    fontSize: 16,
+  removeButton: {
+    alignSelf: "flex-end",
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   remove: {
-    marginLeft: spacing.sm,
     color: colors.danger,
     fontFamily: fontFamily.medium,
     fontSize: 13,

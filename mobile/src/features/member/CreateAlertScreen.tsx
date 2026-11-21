@@ -47,7 +47,7 @@ export function CreateAlertScreen() {
   const handlePublish = async () => {
     if (isSubmitting) return;
     if (!title.trim() || !description.trim()) {
-      setError("Completá el título y la descripción para publicar.");
+      setError("Completa el título y la descripción para publicar.");
       return;
     }
 
