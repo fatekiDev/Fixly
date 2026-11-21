@@ -1,10 +1,29 @@
 import { useRouter, type Href } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, fontFamily, spacing } from "@/constants/theme";
 
+const tabSymbols = {
+  Alertas: { ios: "bell", android: "notifications", web: "notifications" },
+  Nueva: { ios: "plus", android: "add", web: "add" },
+  Perfil: {
+    ios: "person.crop.circle",
+    android: "account_circle",
+    web: "account_circle",
+  },
+  Bandeja: { ios: "tray.full", android: "inbox", web: "inbox" },
+  "Bitácora": { ios: "book.closed", android: "history", web: "history" },
+  "Moderación": {
+    ios: "checkmark.shield",
+    android: "verified_user",
+    web: "verified_user",
+  },
+  Usuarios: { ios: "person.2", android: "group", web: "group" },
+} as const;
+
 export type AppTab = {
   href: Href;
-  label: string;
+  label: keyof typeof tabSymbols;
 };
 
 type AppTabsProps = {
@@ -22,6 +41,7 @@ export function AppTabs({ active, tabs }: AppTabsProps) {
       {tabs.map((tab) => {
         const selected = tab.label === active;
         const isCreateTab = tab.label === "Nueva";
+        const symbol = tabSymbols[tab.label];
 
         return (
           <Pressable
@@ -38,11 +58,15 @@ export function AppTabs({ active, tabs }: AppTabsProps) {
           >
             {isCreateTab ? (
               <View style={styles.createButton}>
-                <Text style={styles.plus}>+</Text>
+                <SymbolView name={symbol} size={28} tintColor={colors.surface} />
               </View>
             ) : (
               <>
-                <View style={[styles.icon, selected && styles.iconSelected]} />
+                <SymbolView
+                  name={symbol}
+                  size={22}
+                  tintColor={selected ? colors.primary : colors.textSecondary}
+                />
                 <Text style={[styles.label, selected && styles.labelSelected]}>
                   {tab.label}
                 </Text>
@@ -118,21 +142,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 6,
-  },
-  plus: {
-    color: colors.surface,
-    fontFamily: fontFamily.bold,
-    fontSize: 32,
-    lineHeight: 36,
-  },
-  icon: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
-    backgroundColor: "#CBD5E1",
-  },
-  iconSelected: {
-    backgroundColor: colors.primary,
   },
   label: {
     color: colors.textSecondary,
