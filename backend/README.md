@@ -1,6 +1,6 @@
 # Fixly API
 
-API REST de Node.js, Express y MongoDB para las cuentas y alertas de Fixly. El cliente móvil todavía usa sus datos locales de demostración; conectar la app con esta API es un siguiente paso.
+API REST de Node.js, Express y MongoDB para las cuentas y alertas de Fixly. La app móvil consume esta API y las fotos adjuntas se guardan en disco local durante el desarrollo.
 
 ## Requisitos
 
@@ -69,7 +69,7 @@ Para cargar las cuentas y alertas demo usadas por la app móvil:
 npm run seed-demo
 ```
 
-Las cuentas demo usan clave `1234`. El script no elimina datos existentes y solo crea o actualiza las cuentas y alertas demo.
+Las cuentas demo (`miembro@fixly.cl`, `pedro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`) usan clave `1234`. El script no elimina datos existentes y solo crea o actualiza las cuentas y alertas demo.
 
 ## Rutas
 
@@ -79,22 +79,24 @@ Todas las respuestas de error usan `{ "error": "..." }`. Las rutas protegidas re
 |---|---|---|
 | GET | `/api/health/live` | Público |
 | GET | `/api/health` | Público; estado de MongoDB |
+| POST | `/api/uploads?kind=report\|evidence` | Miembro o encargado; multipart `file` |
+| GET | `/api/uploads/:id` | Propietario, encargado autorizado o admin |
 | POST | `/api/auth/register` | Público; crea miembro |
 | POST | `/api/auth/login` | Público |
 | GET | `/api/auth/me` | Autenticado |
 | GET | `/api/alerts` | Autenticado; filtra por rol |
-| POST | `/api/alerts` | Miembro |
+| POST | `/api/alerts` | Miembro; `photoId` es opcional |
 | GET | `/api/alerts/:id` | Dueño, encargado del área o admin |
 | POST | `/api/alerts/:id/accept` | Encargado |
 | POST | `/api/alerts/:id/release` | Encargado asignado |
-| POST | `/api/alerts/:id/resolve` | Encargado asignado |
+| POST | `/api/alerts/:id/resolve` | Encargado asignado; requiere `evidenceId` |
 | GET | `/api/alerts/moderation/pending` | Admin |
 | POST | `/api/alerts/:id/moderation` | Admin; `{ "valid": true|false }` |
 | GET | `/api/alerts/closures/pending` | Admin |
 | POST | `/api/alerts/:id/review` | Admin; `{ "approved": true|false }` |
 | GET | `/api/alerts/points/:userId` | Dueño o admin |
 
-Las imágenes se reciben como URLs `http`/`https`; la carga y almacenamiento de archivos todavía no están implementados. Los puntos se calculan a partir de alertas aprobadas (10 por cierre aprobado).
+Las imágenes JPG, PNG y WebP se suben como multipart a `POST /api/uploads?kind=report|evidence` con el campo `file`. El máximo es 5 MB; el servidor valida tipo MIME y firma del archivo, genera un nombre aleatorio, y protege la descarga con autenticación y permisos de alerta. El registro de la alerta recibe el `photoId` retornado por la subida; resolver una alerta requiere el `evidenceId`. Los archivos se guardan en `backend/uploads/`, que está excluido de Git; en producción debe montarse un volumen persistente o reemplazarse por almacenamiento de objetos. Los puntos se calculan a partir de alertas aprobadas (90 iniciales y 10 por cierre aprobado).
 
 ## Pruebas
 

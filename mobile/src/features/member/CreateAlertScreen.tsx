@@ -30,7 +30,7 @@ const urgencies: { value: AlertUrgency; label: string }[] = [
 export function CreateAlertScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { createAlert } = useAlerts();
+  const { createAlert, error: apiError } = useAlerts();
   const { photoUri, error: photoError, chooseFromLibrary, takePhoto, clearPhoto } =
     usePhotoPicker();
   const [title, setTitle] = useState("");
@@ -58,7 +58,7 @@ export function CreateAlertScreen() {
     );
     setIsSubmitting(false);
     if (!alert) {
-      setError("No pudimos publicar la alerta. Revisá tu conexión e intentá nuevamente.");
+      setError("");
       return;
     }
     router.replace({ pathname: "/member/alert/[id]", params: { id: alert.id } });
@@ -148,7 +148,11 @@ export function CreateAlertScreen() {
               })}
             </View>
           </View>
-          {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+          {error || apiError ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {error || apiError}
+            </Text>
+          ) : null}
           <PrimaryButton label="Publicar alerta" onPress={handlePublish} />
         </ScrollView>
       </KeyboardAvoidingView>

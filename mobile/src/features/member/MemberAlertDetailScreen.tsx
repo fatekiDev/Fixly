@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertBadge } from "@/components/AlertBadge";
+import { AuthenticatedImage } from "@/components/AuthenticatedImage";
 import { AppScreen } from "@/components/AppScreen";
 import { InfoBanner } from "@/components/InfoBanner";
 import { ScreenTitle } from "@/components/ScreenTitle";
@@ -26,7 +27,7 @@ export function MemberAlertDetailScreen() {
       ) : (
         <>
           {alert.photoUri ? (
-            <Image source={{ uri: alert.photoUri }} resizeMode="cover" style={styles.photoImage} />
+            <AuthenticatedImage uri={alert.photoUri} style={styles.photoImage} />
           ) : (
             <View style={styles.photo}>
               <Text style={styles.photoText}>Foto del problema</Text>

@@ -21,7 +21,7 @@ const managerTabs: AppTab[] = [
 export function ManagerInboxScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { alerts } = useAlerts();
+  const { alerts, error, isLoading, refreshAlerts } = useAlerts();
   const [filter, setFilter] = useState<InboxFilter>("new");
   const [sortByUrgency, setSortByUrgency] = useState(true);
 
@@ -75,6 +75,14 @@ export function ManagerInboxScreen() {
         action={{ label: "Cerrar sesión", onPress: handleSignOut }}
       />
       <FilterPills options={options} onSelect={setFilter} selected={filter} />
+      {error ? (
+        <View style={styles.error}>
+          <Text style={styles.emptyText}>{error}</Text>
+          <Pressable accessibilityRole="button" onPress={() => void refreshAlerts()}>
+            <Text style={styles.retry}>Intentar nuevamente</Text>
+          </Pressable>
+        </View>
+      ) : null}
       <View style={styles.sortRow}>
         <Text style={styles.sortLabel}>Ordenar por</Text>
         <Pressable
@@ -87,7 +95,9 @@ export function ManagerInboxScreen() {
           </Text>
         </Pressable>
       </View>
-      {visibleAlerts.length ? (
+      {isLoading && !visibleAlerts.length ? (
+        <Text style={styles.emptyText}>Cargando alertas…</Text>
+      ) : visibleAlerts.length ? (
         <View style={styles.list}>
           {visibleAlerts.map((alert) => (
             <IssueCard
@@ -146,6 +156,17 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: colors.surface,
     padding: spacing.xl,
+  },
+  error: {
+    gap: spacing.sm,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+  },
+  retry: {
+    color: colors.primary,
+    fontFamily: fontFamily.semiBold,
+    fontSize: 14,
   },
   emptyTitle: {
     color: colors.text,

@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-const imageUrl = z
-  .string()
-  .url()
-  .max(2048)
-  .refine((value) => ["http:", "https:"].includes(new URL(value).protocol));
-
 export const createAlertSchema = z.object({
   title: z.string().trim().min(4).max(100),
   description: z.string().trim().min(10).max(2000),
@@ -13,7 +7,7 @@ export const createAlertSchema = z.object({
   urgency: z.enum(["low", "medium", "high"]).default("medium"),
   location: z.string().trim().min(2).max(120),
   building: z.string().trim().min(2).max(120),
-  photoUrl: imageUrl.optional(),
+  photoId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
 });
 
 export const moderationSchema = z.object({
@@ -25,5 +19,5 @@ export const closureReviewSchema = z.object({
 });
 
 export const resolveAlertSchema = z.object({
-  evidenceUrl: imageUrl.optional(),
+  evidenceId: z.string().regex(/^[a-f\d]{24}$/i),
 });

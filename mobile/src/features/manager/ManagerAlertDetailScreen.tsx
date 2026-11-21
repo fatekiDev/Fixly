@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertBadge } from "@/components/AlertBadge";
+import { AuthenticatedImage } from "@/components/AuthenticatedImage";
 import { AppScreen } from "@/components/AppScreen";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -15,9 +16,10 @@ export function ManagerAlertDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  const { alerts, acceptAlert, releaseAlert, resolveAlert } = useAlerts();
+  const { alerts, acceptAlert, releaseAlert, resolveAlert, error: apiError } = useAlerts();
   const { photoUri, error, chooseFromLibrary, takePhoto } = usePhotoPicker();
   const [actionMessage, setActionMessage] = useState("");
+  const [isActing, setIsActing] = useState(false);
   const alert = alerts.find((item) => item.id === id);
 
   if (!user || user.role !== "manager") {
@@ -33,22 +35,44 @@ export function ManagerAlertDetailScreen() {
   }
 
   const isAssignedToMe = alert.managerId === user.id;
-  const handleAccept = () => {
-    acceptAlert(alert.id, user);
-    setActionMessage("Caso aceptado. Ya aparece en tu sección En atención.");
+  const handleAccept = async () => {
+    setIsActing(true);
+    setActionMessage("");
+    try {
+      await acceptAlert(alert.id, user);
+      setActionMessage("Caso aceptado. Ya aparece en tu sección En atención.");
+    } catch (actionError) {
+      setActionMessage(actionError instanceof Error ? actionError.message : "No pudimos aceptar el caso.");
+    } finally {
+      setIsActing(false);
+    }
   };
-  const handleRelease = () => {
-    releaseAlert(alert.id, user.id);
-    router.replace("/manager");
+  const handleRelease = async () => {
+    setIsActing(true);
+    try {
+      await releaseAlert(alert.id, user.id);
+      router.replace("/manager");
+    } catch (actionError) {
+      setActionMessage(actionError instanceof Error ? actionError.message : "No pudimos liberar el caso.");
+    } finally {
+      setIsActing(false);
+    }
   };
-  const handleResolve = () => {
+  const handleResolve = async () => {
     if (!photoUri) {
       setActionMessage("Adjunta una foto de evidencia antes de marcarlo como resuelto.");
       return;
     }
 
-    resolveAlert(alert.id, user.id, photoUri);
-    setActionMessage("Caso enviado a revisión del administrador.");
+    setIsActing(true);
+    try {
+      await resolveAlert(alert.id, user.id, photoUri);
+      setActionMessage("Caso enviado a revisión del administrador.");
+    } catch (actionError) {
+      setActionMessage(actionError instanceof Error ? actionError.message : "No pudimos resolver el caso.");
+    } finally {
+      setIsActing(false);
+    }
   };
 
   return (
@@ -57,7 +81,7 @@ export function ManagerAlertDetailScreen() {
         <Text style={styles.backText}>‹ Bandeja</Text>
       </Pressable>
       {alert.photoUri ? (
-        <Image source={{ uri: alert.photoUri }} resizeMode="cover" style={styles.photo} />
+        <AuthenticatedImage uri={alert.photoUri} style={styles.photo} />
       ) : (
         <View style={styles.photoPlaceholder}>
           <Text style={styles.photoLabel}>Foto del problema</Text>
@@ -87,8 +111,8 @@ export function ManagerAlertDetailScreen() {
 
       {alert.status === "new" ? (
         <View style={styles.actions}>
-          <PrimaryButton label="Aceptar caso" onPress={handleAccept} />
-          <PrimaryButton label="No me corresponde" onPress={handleRelease} variant="outline" />
+          <PrimaryButton label="Aceptar caso" onPress={handleAccept} disabled={isActing} />
+          <PrimaryButton label="No me corresponde" onPress={handleRelease} variant="outline" disabled={isActing} />
         </View>
       ) : null}
 
@@ -96,16 +120,17 @@ export function ManagerAlertDetailScreen() {
         <View style={styles.actions}>
           <PhotoPicker
             emptyLabel="Foto de evidencia (requerida)"
-            error={error}
+            error={error || apiError}
             onChooseFromLibrary={chooseFromLibrary}
             onTakePhoto={takePhoto}
             photoUri={photoUri}
           />
-          <PrimaryButton label="Marcar como resuelto" onPress={handleResolve} />
+          <PrimaryButton label="Marcar como resuelto" onPress={handleResolve} disabled={isActing} />
           <PrimaryButton
             label="No me corresponde"
             onPress={handleRelease}
             variant="outline"
+            disabled={isActing}
           />
         </View>
       ) : null}
@@ -116,9 +141,9 @@ export function ManagerAlertDetailScreen() {
       {alert.status === "approved" ? (
         <Text style={styles.notice}>El administrador aprobó el cierre.</Text>
       ) : null}
-      {actionMessage ? (
+      {actionMessage || apiError ? (
         <Text accessibilityRole="alert" style={styles.notice}>
-          {actionMessage}
+          {actionMessage || apiError}
         </Text>
       ) : null}
     </AppScreen>

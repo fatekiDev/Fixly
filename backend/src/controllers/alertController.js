@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Alert } from "../models/Alert.js";
 import { User } from "../models/User.js";
+import { Upload } from "../models/Upload.js";
 import { HttpError } from "../utils/HttpError.js";
 import { parseInput } from "../utils/validate.js";
 import {
@@ -35,6 +36,18 @@ function serializeAlert(alert) {
   result.reporterName = alert.reporterId?.name ?? "";
   result.managerId = alert.managerId?._id?.toString() ?? alert.managerId?.toString();
   result.managerName = alert.managerId?.name;
+  const photoMediaId =
+    alert.photoMediaId?._id?.toString() ?? alert.photoMediaId?.toString();
+  const evidenceMediaId =
+    alert.evidenceMediaId?._id?.toString() ?? alert.evidenceMediaId?.toString();
+  result.photoUrl = photoMediaId
+    ? `/api/uploads/${photoMediaId}`
+    : result.photoUrl;
+  result.evidenceUrl = evidenceMediaId
+    ? `/api/uploads/${evidenceMediaId}`
+    : result.evidenceUrl;
+  delete result.photoMediaId;
+  delete result.evidenceMediaId;
   result.createdAt = alert.createdAt?.getTime();
   delete result._id;
   delete result.__v;
@@ -83,8 +96,20 @@ export async function getAlert(request, response) {
 
 export async function createAlert(request, response) {
   const input = parseInput(createAlertSchema, request.body);
+  const { photoId, ...alertInput } = input;
+  if (photoId) {
+    const photo = await Upload.findOne({
+      _id: photoId,
+      uploadedBy: request.user.id,
+      kind: "report",
+    });
+    if (!photo) {
+      throw new HttpError(400, "La foto del reporte no está disponible.");
+    }
+  }
   const alert = await Alert.create({
-    ...input,
+    ...alertInput,
+    ...(photoId ? { photoMediaId: photoId } : {}),
     reporterId: request.user.id,
     status: "new",
     moderationStatus: "pending",
@@ -126,12 +151,20 @@ export async function releaseAlert(request, response) {
 
 export async function resolveAlert(request, response) {
   const input = parseInput(resolveAlertSchema, request.body);
+  const evidence = await Upload.findOne({
+    _id: input.evidenceId,
+    uploadedBy: request.user.id,
+    kind: "evidence",
+  });
+  if (!evidence) {
+    throw new HttpError(400, "La evidencia no está disponible.");
+  }
   const alert = await Alert.findOneAndUpdate(
     { _id: request.params.id, status: "in_progress", managerId: request.user.id },
     {
       $set: {
         status: "awaiting_review",
-        ...(input.evidenceUrl ? { evidenceUrl: input.evidenceUrl } : {}),
+        evidenceMediaId: input.evidenceId,
       },
     },
     { new: true, runValidators: true },

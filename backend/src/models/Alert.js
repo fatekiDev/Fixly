@@ -39,8 +39,8 @@ const alertSchema = new mongoose.Schema(
     location: { type: String, required: true, trim: true, maxlength: 120 },
     building: { type: String, required: true, trim: true, maxlength: 120 },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    photoUrl: { type: String, maxlength: 2048 },
-    evidenceUrl: { type: String, maxlength: 2048 },
+    photoMediaId: { type: mongoose.Schema.Types.ObjectId, ref: "Upload" },
+    evidenceMediaId: { type: mongoose.Schema.Types.ObjectId, ref: "Upload" },
   },
   { timestamps: true },
 );

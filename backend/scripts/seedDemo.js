@@ -32,6 +32,11 @@ try {
     email: "miembro@fixly.cl",
     role: "member",
   });
+  const pedro = await ensureUser({
+    name: "Pedro Reportante",
+    email: "pedro@fixly.cl",
+    role: "member",
+  });
   const manager = await ensureUser({
     name: "Luis Encargado",
     email: "encargado@fixly.cl",
@@ -48,7 +53,7 @@ try {
   const minutesAgo = (minutes) => new Date(now - minutes * 60_000);
   const hoursAgo = (hours) => new Date(now - hours * 60 * 60_000);
   const daysAgo = (days) => new Date(now - days * 24 * 60 * 60_000);
-  const pedroId = member.id;
+  const pedroId = pedro.id;
   const demoAlerts = [
     { title: "Silla sin pernos", description: "La silla del puesto 5 no tiene pernos y se mueve al sentarse.", location: "Laboratorio 3", building: "Edificio B", area: "Mantenimiento", urgency: "high", status: "in_progress", moderationStatus: "approved", reporterId: member.id, managerId: manager.id, createdAt: minutesAgo(20) },
     { title: "Enchufe suelto en sala 201", description: "El enchufe está suelto y se mueve al conectar equipos.", location: "Sala 201", building: "Edificio A", area: "TI", urgency: "high", status: "new", moderationStatus: "approved", reporterId: pedroId, createdAt: hoursAgo(1) },
@@ -69,11 +74,13 @@ try {
   let created = 0;
   for (const data of demoAlerts) {
     const { title, location, building, reporterId } = data;
+    const { reporterId: _reporterId, ...insertData } = data;
     const result = await Alert.updateOne(
-      { title, location, building, reporterId },
+      { title, location, building },
       {
+        $set: { reporterId },
         $setOnInsert: {
-            ...data,
+          ...insertData,
         },
       },
       { upsert: true },

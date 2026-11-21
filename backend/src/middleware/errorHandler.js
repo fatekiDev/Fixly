@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import multer from "multer";
 import { ZodError } from "zod";
 
 export function errorHandler(error, _request, response, _next) {
@@ -8,6 +9,14 @@ export function errorHandler(error, _request, response, _next) {
 
   if (error?.code === 11000) {
     response.status(409).json({ error: "Ya existe una cuenta con ese correo." });
+    return;
+  }
+  if (error instanceof multer.MulterError) {
+    const message =
+      error.code === "LIMIT_FILE_SIZE"
+        ? "La imagen no puede superar los 5 MB."
+        : "No se pudo procesar la imagen.";
+    response.status(400).json({ error: message });
     return;
   }
   if (error instanceof mongoose.Error.CastError) {

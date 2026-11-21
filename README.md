@@ -60,9 +60,10 @@ Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 |---|---|
 | App móvil | React Native + Expo |
 | Backend (API REST) | Node.js + Express + Mongoose |
-| Base de datos | MongoDB Atlas |
+| Base de datos | MongoDB local (Docker) / MongoDB Atlas |
 | Visualización durante el desarrollo | Expo Go |
-| Notificaciones | Firebase Cloud Messaging (por integrar) |
+| Fotos de alertas | Subida multipart autenticada (JPG, PNG, WebP) |
+| Notificaciones | Push (pendiente) |
 
 ## Estado del proyecto
 
@@ -72,15 +73,16 @@ Estilo: minimalista tipo iOS, con acentos futuristas en azul y cian.
 - [x] Wireframes y guía de estilo en Figma
 - [x] Aplicar la paleta visual en React Native
 - [x] Pantallas del miembro (lista, crear alerta con cámara, detalle, perfil)
-- [x] Flujo local del encargado (bandeja, atención y bitácora)
+- [x] Flujos del encargado (bandeja, atención y bitácora)
 - [x] Moderación de publicaciones y revisión de cierres por administrador
-- [x] Sistema de puntos local de demostración
+- [x] Sistema de puntos
 - [x] API backend con Node + Express + MongoDB
 - [x] Autenticación JWT y permisos por rol en la API
 - [x] Conectar la autenticación y las alertas móviles a la API
+- [x] Subir y mostrar fotos con permisos autenticados
 - [ ] Notificaciones push
 
-La API implementa cuentas, alertas, moderación, revisión de cierres y puntos. La app móvil ya guarda el JWT de forma segura, restaura la sesión y consume las alertas desde el backend. Las notificaciones push siguen pendientes.
+La API implementa cuentas, alertas, moderación, revisión de cierres, puntos e imágenes. La app móvil guarda el JWT de forma segura, restaura la sesión y consume los datos desde el backend. Las notificaciones push siguen pendientes. Las imágenes se guardan localmente en desarrollo; para desplegar se debe configurar almacenamiento persistente/objetos.
 
 ## Estructura del repositorio
 
@@ -103,13 +105,20 @@ npm install
 npx expo start
 ```
 
-Escanea el código QR con Expo Go para visualizar la app en un dispositivo, o elige un emulador desde la terminal.
+Antes de iniciar la app, levanta MongoDB y la API siguiendo [backend/README.md](backend/README.md). Copia `mobile/.env.example` a `mobile/.env.local` y reemplaza la IP por la dirección local de tu computador; el `.env.local` no se sube a Git. Luego inicia Expo:
+
+```powershell
+Copy-Item .env.example .env.local
+npx expo start
+```
+
+Escanea el código QR con Expo Go para visualizar la app en un dispositivo. La API y el teléfono deben estar en la misma red Wi-Fi.
 
 Cuentas de prueba temporales (clave `1234`): `miembro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`.
 
 ### Backend API
 
-Consulta la [guía del backend](backend/README.md) para configurar MongoDB, iniciar la API y crear cuentas de encargado o administrador. En esta etapa, la API aún no está conectada a la app móvil.
+Consulta la [guía del backend](backend/README.md) para configurar MongoDB, iniciar la API, cargar las cuentas demo y crear cuentas de encargado o administrador.
 
 ## Contexto
 

@@ -1,4 +1,6 @@
 import { Platform } from "react-native";
+import { fetch as expoFetch } from "expo/fetch";
+import { File } from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 
 const TOKEN_KEY = "fixly.auth.token";
@@ -11,7 +13,7 @@ export type ApiError = Error & { status?: number };
 
 export async function getStoredToken() {
   if (Platform.OS === "web") {
-    return globalThis.localStorage?.getItem(TOKEN_KEY) ?? null;
+    return globalThis.sessionStorage?.getItem(TOKEN_KEY) ?? null;
   }
   return SecureStore.getItemAsync(TOKEN_KEY);
 }
@@ -19,9 +21,9 @@ export async function getStoredToken() {
 export async function setStoredToken(token: string | null) {
   if (Platform.OS === "web") {
     if (token) {
-      globalThis.localStorage?.setItem(TOKEN_KEY, token);
+      globalThis.sessionStorage?.setItem(TOKEN_KEY, token);
     } else {
-      globalThis.localStorage?.removeItem(TOKEN_KEY);
+      globalThis.sessionStorage?.removeItem(TOKEN_KEY);
     }
     return;
   }
@@ -30,6 +32,20 @@ export async function setStoredToken(token: string | null) {
   } else {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
   }
+}
+
+async function responseError(response: Response) {
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+  const message =
+    data && typeof data === "object" && "error" in data
+      ? String((data as { error: unknown }).error)
+      : `La solicitud falló (${response.status}).`;
+  return Object.assign(new Error(message), { status: response.status } satisfies Partial<ApiError>);
 }
 
 export async function apiRequest<T>(
@@ -57,19 +73,52 @@ export async function apiRequest<T>(
     } satisfies Partial<ApiError>);
   }
 
-  let data: unknown;
+  if (!response.ok) {
+    throw await responseError(response);
+  }
+  return (await response.json()) as T;
+}
+
+export async function uploadImage(uri: string, kind: "report" | "evidence") {
+  const token = await getStoredToken();
+  if (!token) {
+    throw new Error("Inicia sesión antes de subir una imagen.");
+  }
+
+  const formData = new FormData();
+  if (Platform.OS === "web") {
+    const fileResponse = await globalThis.fetch(uri);
+    if (!fileResponse.ok) {
+      throw new Error("No pudimos leer la imagen seleccionada.");
+    }
+    const blob = await fileResponse.blob();
+    formData.append("file", blob, "fixly-image");
+  } else {
+    formData.append("file", new File(uri));
+  }
+
+  let response: Response;
   try {
-    data = await response.json();
+    const url = `${API_URL}/api/uploads?kind=${kind}`;
+    response =
+      Platform.OS === "web"
+        ? await globalThis.fetch(url, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          })
+        : await expoFetch(url, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
   } catch {
-    data = null;
+    throw new Error("No pudimos conectar con el servidor para subir la imagen.");
   }
 
   if (!response.ok) {
-    const message =
-      data && typeof data === "object" && "error" in data
-        ? String((data as { error: unknown }).error)
-        : `La solicitud falló (${response.status}).`;
-    throw Object.assign(new Error(message), { status: response.status } satisfies Partial<ApiError>);
+    throw await responseError(response);
   }
-  return data as T;
+  const result = (await response.json()) as { id: string; url: string };
+  return result;
 }

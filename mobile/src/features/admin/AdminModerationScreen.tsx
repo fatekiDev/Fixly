@@ -28,8 +28,9 @@ export function AdminModerationScreen({
 }: AdminModerationScreenProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const { alerts, moderateAlert } = useAlerts();
+  const { alerts, error, moderateAlert } = useAlerts();
   const [selectedTab, setSelectedTab] = useState(initialTab);
+  const [actionError, setActionError] = useState("");
   const publications = alerts.filter((alert) => alert.moderationStatus === "pending");
   const closures = alerts.filter((alert) => alert.status === "awaiting_review");
 
@@ -41,6 +42,19 @@ export function AdminModerationScreen({
     { value: "publications" as const, label: `Publicaciones (${publications.length})` },
     { value: "closures" as const, label: `Cierres (${closures.length})` },
   ];
+
+  const handleModerate = async (alertId: string, valid: boolean) => {
+    setActionError("");
+    try {
+      await moderateAlert(alertId, valid);
+    } catch (moderationError) {
+      setActionError(
+        moderationError instanceof Error
+          ? moderationError.message
+          : "No pudimos revisar la publicación.",
+      );
+    }
+  };
 
   return (
     <AppScreen footer={<AppTabs active="Moderación" tabs={adminTabs} />}>
@@ -60,6 +74,11 @@ export function AdminModerationScreen({
         options={options}
         selected={selectedTab}
       />
+      {actionError || error ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {actionError || error}
+        </Text>
+      ) : null}
 
       {selectedTab === "publications" ? (
         publications.length ? (
@@ -69,12 +88,12 @@ export function AdminModerationScreen({
                 <View style={styles.actions}>
                   <PrimaryButton
                     label="Declinar"
-                    onPress={() => moderateAlert(alert.id, false)}
+                    onPress={() => void handleModerate(alert.id, false)}
                     variant="danger"
                   />
                   <PrimaryButton
                     label="Es válida"
-                    onPress={() => moderateAlert(alert.id, true)}
+                    onPress={() => void handleModerate(alert.id, true)}
                   />
                 </View>
               </IssueCard>
@@ -132,5 +151,10 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.regular,
     fontSize: 14,
     textAlign: "center",
+  },
+  error: {
+    color: colors.danger,
+    fontFamily: fontFamily.medium,
+    fontSize: 14,
   },
 });

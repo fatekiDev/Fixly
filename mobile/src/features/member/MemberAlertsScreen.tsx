@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Redirect, useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "@/components/AppScreen";
 import { AppTabs, type AppTab } from "@/components/AppTabs";
 import { FilterPills } from "@/components/FilterPills";
@@ -21,7 +21,7 @@ const memberTabs: AppTab[] = [
 export function MemberAlertsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { alerts } = useAlerts();
+  const { alerts, error, isLoading, refreshAlerts } = useAlerts();
   const [filter, setFilter] = useState<MemberFilter>("all");
 
   const myAlerts = useMemo(
@@ -58,6 +58,17 @@ export function MemberAlertsScreen() {
         subtitle={`Hola, ${user.name.split(" ")[0]}. Aquí ves el estado de tus reportes.`}
       />
       <FilterPills options={options} onSelect={setFilter} selected={filter} />
+      {error ? (
+        <View style={styles.errorCard}>
+          <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>
+          <Pressable accessibilityRole="button" onPress={() => void refreshAlerts()}>
+            <Text style={styles.retry}>Intentar nuevamente</Text>
+          </Pressable>
+        </View>
+      ) : null}
+      {isLoading && !visibleAlerts.length ? (
+        <Text style={styles.emptyText}>Cargando alertas…</Text>
+      ) : null}
       {visibleAlerts.length ? (
         <View style={styles.list}>
           {visibleAlerts.map((alert) => (
@@ -107,5 +118,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     textAlign: "center",
+  },
+  errorCard: {
+    gap: spacing.sm,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+  },
+  errorText: {
+    color: colors.danger,
+    fontFamily: fontFamily.medium,
+    fontSize: 14,
+  },
+  retry: {
+    color: colors.primary,
+    fontFamily: fontFamily.semiBold,
+    fontSize: 14,
   },
 });

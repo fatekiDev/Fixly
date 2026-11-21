@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { AuthenticatedImage } from "@/components/AuthenticatedImage";
 import { AppScreen } from "@/components/AppScreen";
 import { InfoBanner } from "@/components/InfoBanner";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -12,7 +14,9 @@ export function AdminClosureReviewScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  const { alerts, reviewClosure } = useAlerts();
+  const { alerts, reviewClosure, error: apiError } = useAlerts();
+  const [actionError, setActionError] = useState("");
+  const [isReviewing, setIsReviewing] = useState(false);
   const alert = alerts.find((item) => item.id === id);
 
   if (!user || user.role !== "admin") {
@@ -27,9 +31,21 @@ export function AdminClosureReviewScreen() {
     );
   }
 
-  const handleReview = (approved: boolean) => {
-    reviewClosure(alert.id, approved);
-    router.replace("/admin/closures");
+  const handleReview = async (approved: boolean) => {
+    setActionError("");
+    setIsReviewing(true);
+    try {
+      await reviewClosure(alert.id, approved);
+      router.replace("/admin/closures");
+    } catch (reviewError) {
+      setActionError(
+        reviewError instanceof Error
+          ? reviewError.message
+          : "No pudimos revisar el cierre.",
+      );
+    } finally {
+      setIsReviewing(false);
+    }
   };
 
   return (
@@ -61,17 +77,24 @@ export function AdminClosureReviewScreen() {
         <View style={styles.actions}>
           <PrimaryButton
             label="Aprobar y dar puntos"
-            onPress={() => handleReview(true)}
+            onPress={() => void handleReview(true)}
+            disabled={isReviewing}
           />
           <PrimaryButton
             label="Rechazar cierre"
-            onPress={() => handleReview(false)}
+            onPress={() => void handleReview(false)}
             variant="danger"
+            disabled={isReviewing}
           />
         </View>
       ) : (
         <Text style={styles.notice}>Este cierre ya fue revisado.</Text>
       )}
+      {actionError || apiError ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {actionError || apiError}
+        </Text>
+      ) : null}
     </AppScreen>
   );
 }
@@ -80,7 +103,7 @@ function EvidencePhoto({ label, uri }: { label: string; uri?: string }) {
   return (
     <View style={styles.photoColumn}>
       {uri ? (
-        <Image source={{ uri }} resizeMode="cover" style={styles.photo} />
+        <AuthenticatedImage uri={uri} style={styles.photo} />
       ) : (
         <View style={styles.photoPlaceholder}>
           <Text style={styles.photoLabel}>{label}</Text>
@@ -174,5 +197,10 @@ const styles = StyleSheet.create({
   empty: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
+  },
+  error: {
+    color: colors.danger,
+    fontFamily: fontFamily.medium,
+    fontSize: 14,
   },
 });

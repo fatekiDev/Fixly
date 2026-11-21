@@ -14,7 +14,7 @@ import {
   type AlertUrgency,
   type IssueAlert,
 } from "@/data/mockAlerts";
-import { apiRequest } from "@/features/api/apiClient";
+import { API_URL, apiRequest, uploadImage } from "@/features/api/apiClient";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 type NewAlertInput = {
@@ -70,8 +70,12 @@ export function AlertProvider({ children }: PropsWithChildren) {
           : new Date(String(createdAtValue)).getTime(),
       managerId: item.managerId ? String(item.managerId) : undefined,
       managerName: item.managerName ? String(item.managerName) : undefined,
-      photoUri: item.photoUrl ? String(item.photoUrl) : undefined,
-      evidenceUri: item.evidenceUrl ? String(item.evidenceUrl) : undefined,
+      photoUri: item.photoUrl
+        ? toMediaUrl(String(item.photoUrl))
+        : undefined,
+      evidenceUri: item.evidenceUrl
+        ? toMediaUrl(String(item.evidenceUrl))
+        : undefined,
     };
   }, []);
 
@@ -107,10 +111,9 @@ export function AlertProvider({ children }: PropsWithChildren) {
   const createAlert = useCallback(
     async (input: NewAlertInput, _reporter: AuthUser) => {
       try {
-        const photoUrl =
-          input.photoUri && /^https?:\/\//i.test(input.photoUri)
-            ? input.photoUri
-            : undefined;
+        const uploadedPhoto = input.photoUri
+          ? await uploadImage(input.photoUri, "report")
+          : undefined;
         const response = await apiRequest<{ alert: AlertRecord }>("/api/alerts", {
           method: "POST",
           body: {
@@ -120,7 +123,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
             urgency: input.urgency,
             location: "Ubicación por informar",
             building: "Universidad",
-            ...(photoUrl ? { photoUrl } : {}),
+            ...(uploadedPhoto ? { photoId: uploadedPhoto.id } : {}),
           },
         });
         const alert = mapAlert(response.alert);
@@ -145,6 +148,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
         await refreshAlerts();
       } catch (actionError) {
         setError(actionError instanceof Error ? actionError.message : "No pudimos aceptar la alerta.");
+        throw actionError;
       }
     },
     [refreshAlerts],
@@ -157,6 +161,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
         await refreshAlerts();
       } catch (actionError) {
         setError(actionError instanceof Error ? actionError.message : "No pudimos liberar la alerta.");
+        throw actionError;
       }
     },
     [refreshAlerts],
@@ -164,16 +169,18 @@ export function AlertProvider({ children }: PropsWithChildren) {
 
   const resolveAlert = useCallback(
     async (id: string, _managerId: string, evidenceUri?: string) => {
-      const evidenceUrl =
-        evidenceUri && /^https?:\/\//i.test(evidenceUri) ? evidenceUri : undefined;
       try {
+        const uploadedEvidence = evidenceUri
+          ? await uploadImage(evidenceUri, "evidence")
+          : undefined;
         await apiRequest(`/api/alerts/${id}/resolve`, {
           method: "POST",
-          body: evidenceUrl ? { evidenceUrl } : {},
+          body: uploadedEvidence ? { evidenceId: uploadedEvidence.id } : {},
         });
         await refreshAlerts();
       } catch (actionError) {
         setError(actionError instanceof Error ? actionError.message : "No pudimos resolver la alerta.");
+        throw actionError;
       }
     },
     [refreshAlerts],
@@ -189,6 +196,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
         await refreshAlerts();
       } catch (actionError) {
         setError(actionError instanceof Error ? actionError.message : "No pudimos moderar la alerta.");
+        throw actionError;
       }
     },
     [refreshAlerts],
@@ -204,6 +212,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
         await refreshAlerts();
       } catch (actionError) {
         setError(actionError instanceof Error ? actionError.message : "No pudimos revisar el cierre.");
+        throw actionError;
       }
     },
     [refreshAlerts],
@@ -268,4 +277,8 @@ export function getAlertStatusLabel(status: AlertStatus) {
     declined: "Declinada",
   };
   return labels[status];
+}
+
+function toMediaUrl(value: string) {
+  return value.startsWith("/") ? `${API_URL}${value}` : value;
 }

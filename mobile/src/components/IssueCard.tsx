@@ -1,6 +1,5 @@
 import type { PropsWithChildren } from "react";
 import {
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -9,6 +8,7 @@ import {
 import type { IssueAlert } from "@/data/mockAlerts";
 import { colors, fontFamily, radii, spacing } from "@/constants/theme";
 import { AlertBadge } from "@/components/AlertBadge";
+import { AuthenticatedImage } from "@/components/AuthenticatedImage";
 
 type IssueCardProps = PropsWithChildren<{
   alert: IssueAlert;
@@ -29,7 +29,7 @@ export function IssueCard({
   const content = (
     <>
       {alert.photoUri ? (
-        <Image source={{ uri: alert.photoUri }} style={styles.photo} />
+        <AuthenticatedImage uri={alert.photoUri} style={styles.photo} />
       ) : (
         <View style={styles.photoPlaceholder}>
           <Text style={styles.photoLabel}>Foto</Text>
