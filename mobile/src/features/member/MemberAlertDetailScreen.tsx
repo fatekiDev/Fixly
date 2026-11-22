@@ -123,6 +123,8 @@ function relativeDate(timestamp: number) {
 const styles = StyleSheet.create({
   back: {
     alignSelf: "flex-start",
+    minHeight: 48,
+    justifyContent: "center",
     paddingVertical: spacing.xs,
   },
   backText: {
@@ -140,7 +142,7 @@ const styles = StyleSheet.create({
   photoText: {
     color: colors.textSecondary,
     fontFamily: fontFamily.medium,
-    fontSize: 15,
+    fontSize: 16,
   },
   photoImage: {
     width: "100%",
@@ -177,8 +179,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     color: colors.text,
     fontFamily: fontFamily.regular,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
   },
   sectionTitle: {
     color: colors.text,
@@ -227,7 +229,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.text,
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 16,
   },
   stepPending: {
     color: "#94A3B8",
@@ -240,5 +242,6 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
+    fontSize: 16,
   },
 });

@@ -1,5 +1,5 @@
 import { Redirect, useRouter } from "expo-router";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import { AlertBadge } from "@/components/AlertBadge";
 import { AppScreen } from "@/components/AppScreen";
 import { AppTabs, type AppTab } from "@/components/AppTabs";
@@ -43,21 +43,33 @@ export function ManagerHistoryScreen() {
   };
 
   return (
-    <AppScreen footer={<AppTabs active="Bitácora" tabs={managerTabs} />}>
-      <ScreenTitle
-        title="Bitácora"
-        subtitle="Tu historial de trabajo"
-        action={{ label: "Cerrar sesión", onPress: handleSignOut }}
-      />
-      <View style={styles.stats}>
-        <Stat value="24" label="Resueltos" />
-        <Stat value="1,8 d" label="Tiempo prom." />
-        <Stat value="21" label="Aprobados" />
-      </View>
-      <Text style={styles.sectionTitle}>Casos recientes</Text>
-      <View style={styles.list}>
-        {recentCases.map((alert) => (
-          <View key={alert.id} style={styles.caseCard}>
+    <AppScreen
+      footer={<AppTabs active="Bitácora" tabs={managerTabs} />}
+      scrollable={false}
+    >
+      <FlatList
+        data={recentCases}
+        keyExtractor={(alert) => alert.id}
+        ListEmptyComponent={
+          <Text style={styles.empty}>Los casos que resuelvas aparecerán aquí.</Text>
+        }
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <ScreenTitle
+              title="Bitácora"
+              subtitle="Tu historial de trabajo"
+              action={{ label: "Cerrar sesión", onPress: handleSignOut }}
+            />
+            <View style={styles.stats}>
+              <Stat value="24" label="Resueltos" />
+              <Stat value="1,8 d" label="Tiempo prom." />
+              <Stat value="21" label="Aprobados" />
+            </View>
+            <Text style={styles.sectionTitle}>Casos recientes</Text>
+          </View>
+        }
+        renderItem={({ item: alert }) => (
+          <View style={styles.caseCard}>
             <View style={styles.caseText}>
               <Text numberOfLines={1} style={styles.caseTitle}>
                 {alert.title}
@@ -69,11 +81,11 @@ export function ManagerHistoryScreen() {
               value={alert.status === "awaiting_review" ? "awaiting_review" : alert.status}
             />
           </View>
-        ))}
-        {!recentCases.length ? (
-          <Text style={styles.empty}>Los casos que resuelvas aparecerán aquí.</Text>
-        ) : null}
-      </View>
+        )}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     </AppScreen>
   );
 }
@@ -93,6 +105,19 @@ function dateLabel(timestamp: number) {
 }
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    flexGrow: 1,
+    gap: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  listHeader: {
+    gap: spacing.lg,
+    marginBottom: spacing.sm,
+  },
   stats: {
     flexDirection: "row",
     gap: spacing.sm,
@@ -119,9 +144,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.semiBold,
     fontSize: 21,
   },
-  list: {
-    gap: spacing.md,
-  },
   caseCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -137,7 +159,7 @@ const styles = StyleSheet.create({
   caseTitle: {
     color: colors.text,
     fontFamily: fontFamily.medium,
-    fontSize: 15,
+    fontSize: 16,
   },
   caseDate: {
     color: colors.textSecondary,
@@ -147,5 +169,6 @@ const styles = StyleSheet.create({
   empty: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
+    fontSize: 16,
   },
 });

@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   pill: {
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 42,
+    minHeight: 48,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.pill,

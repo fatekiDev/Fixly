@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.6,
   },
   action: {
-    minHeight: 40,
+    minHeight: 48,
     justifyContent: "center",
     paddingHorizontal: spacing.xs,
   },

@@ -146,7 +146,10 @@ export function CreateAlertScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={() => router.replace("/member")} style={styles.back}>
+          <Pressable
+            onPress={() => router.replace("/member")}
+            style={styles.back}
+          >
             <Text style={styles.backText}>‹ Cancelar</Text>
           </Pressable>
           <Text style={styles.heading}>Nueva alerta</Text>
@@ -254,7 +257,11 @@ export function CreateAlertScreen() {
               {error || apiError}
             </Text>
           ) : null}
-          <PrimaryButton label="Publicar alerta" onPress={handlePublish} />
+          <PrimaryButton
+            label="Publicar alerta"
+            loading={isSubmitting}
+            onPress={handlePublish}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -281,6 +288,8 @@ const styles = StyleSheet.create({
   },
   back: {
     alignSelf: "flex-start",
+    minHeight: 48,
+    justifyContent: "center",
     paddingVertical: spacing.xs,
   },
   backText: {
@@ -311,7 +320,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     color: colors.text,
     fontFamily: fontFamily.regular,
-    fontSize: 15,
+    fontSize: 16,
   },
   chips: {
     flexDirection: "row",
@@ -319,7 +328,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   chip: {
-    minHeight: 40,
+    minHeight: 48,
     justifyContent: "center",
     borderWidth: 1,
     borderRadius: radii.pill,
@@ -338,7 +347,7 @@ const styles = StyleSheet.create({
   },
   urgencyOption: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -355,6 +364,6 @@ const styles = StyleSheet.create({
   error: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 13,
+    fontSize: 16,
   },
 });

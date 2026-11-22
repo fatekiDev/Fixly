@@ -40,6 +40,7 @@ export function PasswordField({
           accessibilityLabel={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
           hitSlop={8}
           onPress={() => setVisible((current) => !current)}
+          style={styles.revealButton}
         >
           <Text style={styles.action}>{visible ? "Ocultar" : "Mostrar"}</Text>
         </Pressable>
@@ -49,6 +50,10 @@ export function PasswordField({
 }
 
 const styles = {
+  revealButton: {
+    minHeight: 48,
+    justifyContent: "center" as const,
+  },
   action: {
     color: colors.primaryDark,
     fontFamily: fontFamily.medium,

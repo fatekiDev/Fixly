@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   email: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 16,
   },
   role: {
     color: colors.primaryDark,

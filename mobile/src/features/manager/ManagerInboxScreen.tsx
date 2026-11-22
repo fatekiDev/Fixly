@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Redirect, useRouter } from "expo-router";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "@/components/AppScreen";
 import { AppTabs, type AppTab } from "@/components/AppTabs";
 import { FilterPills } from "@/components/FilterPills";
@@ -75,62 +75,94 @@ export function ManagerInboxScreen() {
   };
 
   return (
-    <AppScreen footer={<AppTabs active="Bandeja" tabs={managerTabs} />}>
-      <ScreenTitle
-        title="Bandeja"
-        subtitle={`Área: ${user.area} · ${newAlerts.length} alertas nuevas`}
-        action={{ label: "Cerrar sesión", onPress: handleSignOut }}
-      />
-      <FilterPills options={options} onSelect={setFilter} selected={filter} />
-      {error ? (
-        <View style={styles.error}>
-          <Text style={styles.emptyText}>{error}</Text>
-          <Pressable accessibilityRole="button" onPress={() => void refreshAlerts()}>
-            <Text style={styles.retry}>Intentar nuevamente</Text>
-          </Pressable>
-        </View>
-      ) : null}
-      <View style={styles.sortRow}>
-        <Text style={styles.sortLabel}>Ordenar por</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setSortByUrgency((current) => !current)}
-          style={styles.sortButton}
-        >
-          <Text style={styles.sortValue}>
-            {sortByUrgency ? "Urgencia  ▾" : "Más recientes  ▾"}
-          </Text>
-        </Pressable>
-      </View>
-      {isLoading && !visibleAlerts.length ? (
-        <Text style={styles.emptyText}>Cargando alertas…</Text>
-      ) : visibleAlerts.length ? (
-        <View style={styles.list}>
-          {visibleAlerts.map((alert) => (
-            <IssueCard
-              alert={alert}
-              key={alert.id}
-              onPress={() =>
-                router.navigate({
-                  pathname: "/manager/alert/[id]",
-                  params: { id: alert.id },
-                })
-              }
-              showReporter
+    <AppScreen
+      footer={<AppTabs active="Bandeja" tabs={managerTabs} />}
+      scrollable={false}
+    >
+      <FlatList
+        data={visibleAlerts}
+        keyExtractor={(alert) => alert.id}
+        ListEmptyComponent={
+          isLoading ? undefined : (
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>No hay casos en esta sección</Text>
+              <Text style={styles.emptyText}>
+                Las alertas nuevas aparecerán en tu bandeja.
+              </Text>
+            </View>
+          )
+        }
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <ScreenTitle
+              title="Bandeja"
+              subtitle={`Área: ${user.area} · ${newAlerts.length} alertas nuevas`}
+              action={{ label: "Cerrar sesión", onPress: handleSignOut }}
             />
-          ))}
-        </View>
-      ) : (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>No hay casos en esta sección</Text>
-          <Text style={styles.emptyText}>Las alertas nuevas aparecerán en tu bandeja.</Text>
-        </View>
-      )}
+            <FilterPills options={options} onSelect={setFilter} selected={filter} />
+            {error ? (
+              <View style={styles.error}>
+                <Text style={styles.emptyText}>{error}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void refreshAlerts()}
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retry}>Intentar nuevamente</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <View style={styles.sortRow}>
+              <Text style={styles.sortLabel}>Ordenar por</Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setSortByUrgency((current) => !current)}
+                style={styles.sortButton}
+              >
+                <Text style={styles.sortValue}>
+                  {sortByUrgency ? "Urgencia  ▾" : "Más recientes  ▾"}
+                </Text>
+              </Pressable>
+            </View>
+            {isLoading && !visibleAlerts.length ? (
+              <Text style={styles.emptyText}>Cargando alertas…</Text>
+            ) : null}
+          </View>
+        }
+        renderItem={({ item }) => (
+          <IssueCard
+            alert={item}
+            onPress={() =>
+              router.navigate({
+                pathname: "/manager/alert/[id]",
+                params: { id: item.id },
+              })
+            }
+            showReporter
+          />
+        )}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    flexGrow: 1,
+    gap: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  listHeader: {
+    gap: spacing.lg,
+    marginBottom: spacing.sm,
+  },
   sortRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -142,6 +174,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   sortButton: {
+    minHeight: 48,
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 999,
@@ -153,9 +187,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: fontFamily.medium,
     fontSize: 14,
-  },
-  list: {
-    gap: spacing.md,
   },
   empty: {
     alignItems: "center",
@@ -175,6 +206,11 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.semiBold,
     fontSize: 14,
   },
+  retryButton: {
+    alignSelf: "flex-start",
+    minHeight: 48,
+    justifyContent: "center",
+  },
   emptyTitle: {
     color: colors.text,
     fontFamily: fontFamily.semiBold,
@@ -183,7 +219,7 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 16,
     textAlign: "center",
   },
 });

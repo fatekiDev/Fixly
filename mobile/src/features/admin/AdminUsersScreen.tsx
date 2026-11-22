@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Redirect } from "expo-router";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { AppScreen } from "@/components/AppScreen";
 import { AppTabs, type AppTab } from "@/components/AppTabs";
 import { ScreenTitle } from "@/components/ScreenTitle";
@@ -51,22 +58,43 @@ export function AdminUsersScreen() {
   }
 
   return (
-    <AppScreen footer={<AppTabs active="Usuarios" tabs={adminTabs} />}>
-      <ScreenTitle title="Usuarios" subtitle={`${users.length} cuentas registradas`} />
-      {isLoading ? (
-        <ActivityIndicator color={colors.primary} />
-      ) : null}
-      {error ? (
-        <View style={styles.message}>
-          <Text accessibilityRole="alert" style={styles.error}>{error}</Text>
-          <Pressable accessibilityRole="button" onPress={() => void refreshUsers()}>
-            <Text style={styles.retry}>Intentar nuevamente</Text>
-          </Pressable>
-        </View>
-      ) : null}
-      <View style={styles.list}>
-        {users.map((account) => (
-          <View key={account.id} style={styles.card}>
+    <AppScreen
+      footer={<AppTabs active="Usuarios" tabs={adminTabs} />}
+      scrollable={false}
+    >
+      <FlatList
+        data={users}
+        keyExtractor={(account) => account.id}
+        ListEmptyComponent={
+          !isLoading && !error ? (
+            <Text style={styles.empty}>Todavía no hay usuarios registrados.</Text>
+          ) : undefined
+        }
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <ScreenTitle
+              title="Usuarios"
+              subtitle={`${users.length} cuentas registradas`}
+            />
+            {isLoading ? <ActivityIndicator color={colors.primary} /> : null}
+            {error ? (
+              <View style={styles.message}>
+                <Text accessibilityRole="alert" style={styles.error}>
+                  {error}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void refreshUsers()}
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retry}>Intentar nuevamente</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        }
+        renderItem={({ item: account }) => (
+          <View style={styles.card}>
             <View style={styles.avatar}>
               <Text style={styles.initials}>{initials(account.name)}</Text>
             </View>
@@ -81,11 +109,11 @@ export function AdminUsersScreen() {
               </Text>
             </View>
           </View>
-        ))}
-        {!isLoading && !error && !users.length ? (
-          <Text style={styles.empty}>Todavía no hay usuarios registrados.</Text>
-        ) : null}
-      </View>
+        )}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     </AppScreen>
   );
 }
@@ -101,7 +129,17 @@ function initials(name: string) {
 
 const styles = StyleSheet.create({
   list: {
+    flex: 1,
+  },
+  listContent: {
+    flexGrow: 1,
     gap: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  listHeader: {
+    gap: spacing.lg,
+    marginBottom: spacing.sm,
   },
   message: {
     gap: spacing.sm,
@@ -112,16 +150,22 @@ const styles = StyleSheet.create({
   error: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 14,
+    fontSize: 16,
   },
   retry: {
     color: colors.primaryDark,
     fontFamily: fontFamily.semiBold,
     fontSize: 14,
   },
+  retryButton: {
+    alignSelf: "flex-start",
+    minHeight: 48,
+    justifyContent: "center",
+  },
   empty: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
+    fontSize: 16,
     textAlign: "center",
   },
   card: {
@@ -156,7 +200,7 @@ const styles = StyleSheet.create({
   email: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 13,
+    fontSize: 16,
   },
   role: {
     color: colors.primaryDark,

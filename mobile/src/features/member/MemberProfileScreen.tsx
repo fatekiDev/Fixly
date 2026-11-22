@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   email: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 16,
   },
   pointsCard: {
     gap: spacing.xs,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   pointsSummary: {
     color: "#E8F0FF",
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 16,
   },
   sectionTitle: {
     color: colors.text,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   reportTitle: {
     color: colors.text,
     fontFamily: fontFamily.medium,
-    fontSize: 15,
+    fontSize: 16,
   },
   reportTime: {
     color: colors.textSecondary,
@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
+    fontSize: 16,
   },
   signOut: {
     minHeight: 54,

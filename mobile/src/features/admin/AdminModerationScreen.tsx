@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Redirect, useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "@/components/AppScreen";
 import { AppTabs, type AppTab } from "@/components/AppTabs";
 import { FilterPills } from "@/components/FilterPills";
@@ -31,8 +31,10 @@ export function AdminModerationScreen({
   const { alerts, error, moderateAlert } = useAlerts();
   const [selectedTab, setSelectedTab] = useState(initialTab);
   const [actionError, setActionError] = useState("");
+  const [moderatingId, setModeratingId] = useState<string | null>(null);
   const publications = alerts.filter((alert) => alert.moderationStatus === "pending");
   const closures = alerts.filter((alert) => alert.status === "awaiting_review");
+  const visibleAlerts = selectedTab === "publications" ? publications : closures;
 
   if (!user || user.role !== "admin") {
     return <Redirect href="/home" />;
@@ -44,7 +46,9 @@ export function AdminModerationScreen({
   ];
 
   const handleModerate = async (alertId: string, valid: boolean) => {
+    if (moderatingId) return;
     setActionError("");
+    setModeratingId(alertId);
     try {
       await moderateAlert(alertId, valid);
     } catch (moderationError) {
@@ -53,74 +57,85 @@ export function AdminModerationScreen({
           ? moderationError.message
           : "No pudimos revisar la publicación.",
       );
+    } finally {
+      setModeratingId(null);
     }
   };
 
   return (
-    <AppScreen footer={<AppTabs active="Moderación" tabs={adminTabs} />}>
-      <ScreenTitle
-        title="Moderación"
-        subtitle="Revisa publicaciones y cierres de casos"
-      />
-      <FilterPills
-        onSelect={(value) => {
-          setSelectedTab(value);
-          if (value === "closures") {
-            router.navigate("/admin/closures");
-          } else {
-            router.navigate("/admin");
-          }
-        }}
-        options={options}
-        selected={selectedTab}
-      />
-      {actionError || error ? (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {actionError || error}
-        </Text>
-      ) : null}
-
-      {selectedTab === "publications" ? (
-        publications.length ? (
-          <View style={styles.list}>
-            {publications.map((alert) => (
-              <IssueCard alert={alert} key={alert.id}>
-                <View style={styles.actions}>
-                  <PrimaryButton
-                    label="Declinar"
-                    onPress={() => void handleModerate(alert.id, false)}
-                    variant="danger"
-                  />
-                  <PrimaryButton
-                    label="Es válida"
-                    onPress={() => void handleModerate(alert.id, true)}
-                  />
-                </View>
-              </IssueCard>
-            ))}
+    <AppScreen
+      footer={<AppTabs active="Moderación" tabs={adminTabs} />}
+      scrollable={false}
+    >
+      <FlatList
+        data={visibleAlerts}
+        keyExtractor={(alert) => alert.id}
+        ListEmptyComponent={
+          <EmptyState>
+            {selectedTab === "publications"
+              ? "Ya revisaste todas las publicaciones."
+              : "No hay cierres pendientes de revisión."}
+          </EmptyState>
+        }
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <ScreenTitle
+              title="Moderación"
+              subtitle="Revisa publicaciones y cierres de casos"
+            />
+            <FilterPills
+              onSelect={(value) => {
+                setSelectedTab(value);
+                router.navigate(
+                  value === "closures" ? "/admin/closures" : "/admin",
+                );
+              }}
+              options={options}
+              selected={selectedTab}
+            />
+            {actionError || error ? (
+              <Text accessibilityRole="alert" style={styles.error}>
+                {actionError || error}
+              </Text>
+            ) : null}
           </View>
-        ) : (
-          <EmptyState>Ya revisaste todas las publicaciones.</EmptyState>
-        )
-      ) : closures.length ? (
-        <View style={styles.list}>
-          {closures.map((alert) => (
+        }
+        renderItem={({ item }) =>
+          selectedTab === "publications" ? (
+            <IssueCard alert={item}>
+              <View style={styles.actions}>
+                <PrimaryButton
+                  label="Declinar"
+                  onPress={() => void handleModerate(item.id, false)}
+                  variant="danger"
+                  disabled={moderatingId !== null}
+                  loading={moderatingId === item.id}
+                />
+                <PrimaryButton
+                  label="Es válida"
+                  onPress={() => void handleModerate(item.id, true)}
+                  disabled={moderatingId !== null}
+                  loading={moderatingId === item.id}
+                />
+              </View>
+            </IssueCard>
+          ) : (
             <IssueCard
-              alert={alert}
-              key={alert.id}
+              alert={item}
               onPress={() =>
                 router.navigate({
                   pathname: "/admin/closure/[id]",
-                  params: { id: alert.id },
+                  params: { id: item.id },
                 })
               }
               showReporter
             />
-          ))}
-        </View>
-      ) : (
-        <EmptyState>No hay cierres pendientes de revisión.</EmptyState>
-      )}
+          )
+        }
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     </AppScreen>
   );
 }
@@ -135,7 +150,17 @@ function EmptyState({ children }: { children: string }) {
 
 const styles = StyleSheet.create({
   list: {
+    flex: 1,
+  },
+  listContent: {
+    flexGrow: 1,
     gap: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  listHeader: {
+    gap: spacing.lg,
+    marginBottom: spacing.sm,
   },
   actions: {
     flexDirection: "row",
@@ -149,12 +174,12 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 16,
     textAlign: "center",
   },
   error: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 14,
+    fontSize: 16,
   },
 });

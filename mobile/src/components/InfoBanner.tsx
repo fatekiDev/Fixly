@@ -26,12 +26,12 @@ const styles = StyleSheet.create({
   title: {
     color: colors.primaryDark,
     fontFamily: fontFamily.semiBold,
-    fontSize: 15,
+    fontSize: 16,
   },
   description: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 16,
+    lineHeight: 24,
   },
 });

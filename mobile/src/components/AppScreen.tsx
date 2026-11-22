@@ -10,20 +10,29 @@ import { colors, spacing } from "@/constants/theme";
 
 type AppScreenProps = PropsWithChildren<{
   footer?: ReactNode;
+  scrollable?: boolean;
 }>;
 
-export function AppScreen({ children, footer }: AppScreenProps) {
+export function AppScreen({
+  children,
+  footer,
+  scrollable = true,
+}: AppScreenProps) {
   return (
     <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.flex}>
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {children}
-        </ScrollView>
+        {scrollable ? (
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={styles.fixedContent}>{children}</View>
+        )}
         {footer}
       </View>
     </SafeAreaView>
@@ -37,6 +46,13 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  fixedContent: {
+    flex: 1,
+    alignSelf: "center",
+    maxWidth: 520,
+    paddingHorizontal: spacing.lg,
+    width: "100%",
   },
   content: {
     alignSelf: "center",

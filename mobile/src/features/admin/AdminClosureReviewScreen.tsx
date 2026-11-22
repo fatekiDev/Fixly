@@ -17,6 +17,9 @@ export function AdminClosureReviewScreen() {
   const { alerts, reviewClosure, error: apiError } = useAlerts();
   const [actionError, setActionError] = useState("");
   const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewingAction, setReviewingAction] = useState<"approve" | "reject" | null>(
+    null,
+  );
   const alert = alerts.find((item) => item.id === id);
 
   if (!user || user.role !== "admin") {
@@ -34,6 +37,7 @@ export function AdminClosureReviewScreen() {
   const handleReview = async (approved: boolean) => {
     setActionError("");
     setIsReviewing(true);
+    setReviewingAction(approved ? "approve" : "reject");
     try {
       await reviewClosure(alert.id, approved);
       router.replace("/admin/closures");
@@ -45,12 +49,16 @@ export function AdminClosureReviewScreen() {
       );
     } finally {
       setIsReviewing(false);
+      setReviewingAction(null);
     }
   };
 
   return (
     <AppScreen>
-      <Pressable onPress={() => router.replace("/admin/closures")} style={styles.back}>
+      <Pressable
+        onPress={() => router.replace("/admin/closures")}
+        style={styles.back}
+      >
         <Text style={styles.backText}>‹ Cierres</Text>
       </Pressable>
       <ScreenTitle title="Verificar cierre" />
@@ -79,12 +87,14 @@ export function AdminClosureReviewScreen() {
             label="Aprobar y dar puntos"
             onPress={() => void handleReview(true)}
             disabled={isReviewing}
+            loading={reviewingAction === "approve"}
           />
           <PrimaryButton
             label="Rechazar cierre"
             onPress={() => void handleReview(false)}
             variant="danger"
             disabled={isReviewing}
+            loading={reviewingAction === "reject"}
           />
         </View>
       ) : (
@@ -124,6 +134,8 @@ function resolutionTime(timestamp: number) {
 const styles = StyleSheet.create({
   back: {
     alignSelf: "flex-start",
+    minHeight: 48,
+    justifyContent: "center",
     paddingVertical: spacing.xs,
   },
   backText: {
@@ -140,7 +152,7 @@ const styles = StyleSheet.create({
     marginTop: -spacing.md,
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 15,
+    fontSize: 16,
   },
   photos: {
     flexDirection: "row",
@@ -184,7 +196,7 @@ const styles = StyleSheet.create({
   detail: {
     color: colors.text,
     fontFamily: fontFamily.regular,
-    fontSize: 15,
+    fontSize: 16,
   },
   actions: {
     gap: spacing.md,
@@ -192,15 +204,16 @@ const styles = StyleSheet.create({
   notice: {
     color: colors.textSecondary,
     fontFamily: fontFamily.medium,
-    fontSize: 14,
+    fontSize: 16,
   },
   empty: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
+    fontSize: 16,
   },
   error: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 14,
+    fontSize: 16,
   },
 });

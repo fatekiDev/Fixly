@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, fontFamily, radii } from "@/constants/theme";
 
 type PrimaryButtonProps = {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  loading?: boolean;
   variant?: "primary" | "outline" | "danger";
 };
 
@@ -12,6 +13,7 @@ export function PrimaryButton({
   label,
   onPress,
   disabled = false,
+  loading = false,
   variant = "primary",
 }: PrimaryButtonProps) {
   const buttonStyle =
@@ -28,19 +30,29 @@ export function PrimaryButton({
         : styles.label;
   const pressedStyle =
     variant === "primary" ? styles.pressed : styles.secondaryPressed;
+  const spinnerColor =
+    variant === "primary"
+      ? colors.surface
+      : variant === "danger"
+        ? colors.danger
+        : colors.primary;
 
   return (
     <Pressable
       accessibilityRole="button"
-      disabled={disabled}
+      accessibilityState={{ disabled: disabled || loading }}
+      disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => [
         buttonStyle,
-        pressed && !disabled ? pressedStyle : null,
-        disabled ? styles.disabled : null,
+        pressed && !disabled && !loading ? pressedStyle : null,
+        disabled || loading ? styles.disabled : null,
       ]}
     >
-      <Text style={labelStyle}>{label}</Text>
+      <View style={styles.content}>
+        {loading ? <ActivityIndicator color={spinnerColor} size="small" /> : null}
+        <Text style={labelStyle}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -53,6 +65,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.field,
     backgroundColor: colors.primary,
     paddingHorizontal: 20,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   pressed: {
     backgroundColor: colors.primaryDark,

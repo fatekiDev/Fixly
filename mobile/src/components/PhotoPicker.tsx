@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   emptyLabel: {
     color: colors.textSecondary,
     fontFamily: fontFamily.medium,
-    fontSize: 15,
+    fontSize: 16,
     textAlign: "center",
   },
   actions: {
@@ -113,6 +113,8 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     alignSelf: "flex-end",
+    minHeight: 48,
+    justifyContent: "center",
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
   },
@@ -124,6 +126,7 @@ const styles = StyleSheet.create({
   error: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 13,
+    fontSize: 16,
+    lineHeight: 22,
   },
 });

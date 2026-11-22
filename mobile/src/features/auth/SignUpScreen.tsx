@@ -127,13 +127,21 @@ export function SignUpScreen() {
             </Text>
 
             {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-            <PrimaryButton label="Crear cuenta" onPress={handleSignUp} />
+            <PrimaryButton
+              label="Crear cuenta"
+              loading={isSubmitting}
+              onPress={handleSignUp}
+            />
           </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>¿Ya tienes una cuenta?</Text>
             <Link href="/" asChild>
-              <Pressable accessibilityRole="link" hitSlop={8}>
+              <Pressable
+                accessibilityRole="link"
+                hitSlop={8}
+                style={styles.footerLink}
+              >
                 <Text style={styles.linkText}>Inicia sesión</Text>
               </Pressable>
             </Link>
@@ -191,8 +199,8 @@ const styles = StyleSheet.create({
   terms: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
   },
   termsLink: {
     color: colors.primaryDark,
@@ -201,8 +209,8 @@ const styles = StyleSheet.create({
   error: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 22,
   },
   footer: {
     flexDirection: "row",
@@ -215,11 +223,15 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.text,
     fontFamily: fontFamily.regular,
-    fontSize: 15,
+    fontSize: 16,
+  },
+  footerLink: {
+    minHeight: 48,
+    justifyContent: "center",
   },
   linkText: {
     color: colors.primaryDark,
     fontFamily: fontFamily.semiBold,
-    fontSize: 15,
+    fontSize: 16,
   },
 });

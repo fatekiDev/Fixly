@@ -30,6 +30,9 @@ export function ManagerAlertDetailScreen() {
   const { photoUri, error, chooseFromLibrary, takePhoto } = usePhotoPicker();
   const [actionMessage, setActionMessage] = useState("");
   const [isActing, setIsActing] = useState(false);
+  const [actingAction, setActingAction] = useState<
+    "accept" | "release" | "reassign" | "resolve" | null
+  >(null);
   const [showReassignOptions, setShowReassignOptions] = useState(false);
   const [isAreaListOpen, setIsAreaListOpen] = useState(false);
   const [managers, setManagers] = useState<AuthUser[]>([]);
@@ -85,6 +88,7 @@ export function ManagerAlertDetailScreen() {
   const selectedManager = managers.find((manager) => manager.area === selectedArea);
   const handleAccept = async () => {
     setIsActing(true);
+    setActingAction("accept");
     setActionMessage("");
     try {
       await acceptAlert(alert.id, user);
@@ -93,10 +97,12 @@ export function ManagerAlertDetailScreen() {
       setActionMessage(actionError instanceof Error ? actionError.message : "No pudimos aceptar el caso.");
     } finally {
       setIsActing(false);
+      setActingAction(null);
     }
   };
   const handleRelease = async () => {
     setIsActing(true);
+    setActingAction("release");
     try {
       await releaseAlert(alert.id, user.id);
       router.replace("/manager");
@@ -104,6 +110,7 @@ export function ManagerAlertDetailScreen() {
       setActionMessage(actionError instanceof Error ? actionError.message : "No pudimos liberar el caso.");
     } finally {
       setIsActing(false);
+      setActingAction(null);
     }
   };
   const handleReassign = async () => {
@@ -113,6 +120,7 @@ export function ManagerAlertDetailScreen() {
     }
 
     setIsActing(true);
+    setActingAction("reassign");
     setActionMessage("");
     try {
       await reassignAlert(alert.id, selectedArea);
@@ -125,6 +133,7 @@ export function ManagerAlertDetailScreen() {
       );
     } finally {
       setIsActing(false);
+      setActingAction(null);
     }
   };
   const handleResolve = async () => {
@@ -134,6 +143,7 @@ export function ManagerAlertDetailScreen() {
     }
 
     setIsActing(true);
+    setActingAction("resolve");
     try {
       await resolveAlert(alert.id, user.id, photoUri);
       setActionMessage("Caso enviado a revisión del administrador.");
@@ -141,12 +151,16 @@ export function ManagerAlertDetailScreen() {
       setActionMessage(actionError instanceof Error ? actionError.message : "No pudimos resolver el caso.");
     } finally {
       setIsActing(false);
+      setActingAction(null);
     }
   };
 
   return (
     <AppScreen>
-      <Pressable onPress={() => router.replace("/manager")} style={styles.back}>
+      <Pressable
+        onPress={() => router.replace("/manager")}
+        style={styles.back}
+      >
         <Text style={styles.backText}>‹ Bandeja</Text>
       </Pressable>
       {alert.photoUri ? (
@@ -180,7 +194,12 @@ export function ManagerAlertDetailScreen() {
 
       {alert.status === "new" ? (
         <View style={styles.actions}>
-          <PrimaryButton label="Aceptar caso" onPress={handleAccept} disabled={isActing} />
+          <PrimaryButton
+            label="Aceptar caso"
+            onPress={handleAccept}
+            disabled={isActing}
+            loading={actingAction === "accept"}
+          />
           <PrimaryButton
             label={showReassignOptions ? "Cancelar derivación" : "No me corresponde"}
             onPress={() => {
@@ -259,6 +278,7 @@ export function ManagerAlertDetailScreen() {
                 label={selectedArea ? `Derivar a ${selectedArea}` : "Derivar alerta"}
                 onPress={handleReassign}
                 disabled={isActing || !selectedArea}
+                loading={actingAction === "reassign"}
               />
             </View>
           ) : null}
@@ -274,12 +294,18 @@ export function ManagerAlertDetailScreen() {
             onTakePhoto={takePhoto}
             photoUri={photoUri}
           />
-          <PrimaryButton label="Marcar como resuelto" onPress={handleResolve} disabled={isActing} />
+          <PrimaryButton
+            label="Marcar como resuelto"
+            onPress={handleResolve}
+            disabled={isActing}
+            loading={actingAction === "resolve"}
+          />
           <PrimaryButton
             label="Liberar caso"
             onPress={handleRelease}
             variant="outline"
             disabled={isActing}
+            loading={actingAction === "release"}
           />
         </View>
       ) : null}
@@ -311,6 +337,8 @@ function relativeTime(timestamp: number) {
 const styles = StyleSheet.create({
   back: {
     alignSelf: "flex-start",
+    minHeight: 48,
+    justifyContent: "center",
     paddingVertical: spacing.xs,
   },
   backText: {
@@ -369,8 +397,8 @@ const styles = StyleSheet.create({
   instructionText: {
     color: colors.primaryDark,
     fontFamily: fontFamily.medium,
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 16,
+    lineHeight: 24,
   },
   actions: {
     gap: spacing.md,
@@ -389,8 +417,8 @@ const styles = StyleSheet.create({
   reassignDescription: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 24,
   },
   selectArea: {
     minHeight: 48,
@@ -406,18 +434,19 @@ const styles = StyleSheet.create({
   selectPlaceholder: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 16,
   },
   selectedAreaText: {
     color: colors.text,
     fontFamily: fontFamily.medium,
-    fontSize: 14,
+    fontSize: 16,
   },
   dropdownIndicator: {
     color: colors.textSecondary,
     fontSize: 20,
   },
   managerOption: {
+    minHeight: 48,
     gap: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border,
@@ -431,26 +460,27 @@ const styles = StyleSheet.create({
   managerOptionArea: {
     color: colors.primaryDark,
     fontFamily: fontFamily.semiBold,
-    fontSize: 14,
+    fontSize: 16,
   },
   managerOptionName: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 12,
+    fontSize: 16,
   },
   errorText: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 13,
+    fontSize: 16,
   },
   notice: {
     color: colors.primaryDark,
     fontFamily: fontFamily.medium,
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 16,
+    lineHeight: 24,
   },
   emptyText: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
+    fontSize: 16,
   },
 });

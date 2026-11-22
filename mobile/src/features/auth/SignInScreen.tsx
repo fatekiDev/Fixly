@@ -102,13 +102,21 @@ export function SignInScreen() {
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
             {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-            <PrimaryButton label="Iniciar sesión" onPress={handleSignIn} />
+            <PrimaryButton
+              label="Iniciar sesión"
+              loading={isSubmitting}
+              onPress={handleSignIn}
+            />
           </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>¿Todavía no tienes cuenta?</Text>
             <Link href="/register" asChild>
-              <Pressable accessibilityRole="link" hitSlop={8}>
+              <Pressable
+                accessibilityRole="link"
+                hitSlop={8}
+                style={styles.footerLink}
+              >
                 <Text style={styles.linkText}>Crea una cuenta</Text>
               </Pressable>
             </Link>
@@ -166,24 +174,30 @@ const styles = StyleSheet.create({
   },
   forgotButton: {
     alignSelf: "flex-end",
+    minHeight: 48,
+    justifyContent: "center",
     paddingVertical: spacing.xs,
+  },
+  footerLink: {
+    minHeight: 48,
+    justifyContent: "center",
   },
   linkText: {
     color: colors.primaryDark,
     fontFamily: fontFamily.semiBold,
-    fontSize: 15,
+    fontSize: 16,
   },
   error: {
     color: colors.danger,
     fontFamily: fontFamily.medium,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 22,
   },
   notice: {
     color: colors.textSecondary,
     fontFamily: fontFamily.regular,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 24,
   },
   footer: {
     flexDirection: "row",
@@ -196,6 +210,6 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.text,
     fontFamily: fontFamily.regular,
-    fontSize: 15,
+    fontSize: 16,
   },
 });

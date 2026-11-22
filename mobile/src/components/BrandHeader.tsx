@@ -29,6 +29,6 @@ const styles = StyleSheet.create({
   tagline: {
     color: colors.textSecondary,
     fontFamily: fontFamily.medium,
-    fontSize: 15,
+    fontSize: 16,
   },
 });
