@@ -36,6 +36,7 @@ type AlertContextValue = {
   resolveAlert: (id: string, managerId: string, evidenceUri?: string) => Promise<void>;
   moderateAlert: (id: string, valid: boolean) => Promise<void>;
   reviewClosure: (id: string, approved: boolean) => Promise<void>;
+  reassignAlert: (id: string, area: AlertArea) => Promise<void>;
   getPoints: (userId: string) => number;
 };
 
@@ -167,6 +168,26 @@ export function AlertProvider({ children }: PropsWithChildren) {
     [refreshAlerts],
   );
 
+  const reassignAlert = useCallback(
+    async (id: string, area: AlertArea) => {
+      try {
+        await apiRequest(`/api/alerts/${id}/reassign`, {
+          method: "POST",
+          body: { area },
+        });
+        await refreshAlerts();
+      } catch (actionError) {
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : "No pudimos derivar la alerta.",
+        );
+        throw actionError;
+      }
+    },
+    [refreshAlerts],
+  );
+
   const resolveAlert = useCallback(
     async (id: string, _managerId: string, evidenceUri?: string) => {
       try {
@@ -237,6 +258,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
       createAlert,
       acceptAlert,
       releaseAlert,
+      reassignAlert,
       resolveAlert,
       moderateAlert,
       reviewClosure,
@@ -250,6 +272,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
       createAlert,
       acceptAlert,
       releaseAlert,
+      reassignAlert,
       resolveAlert,
       moderateAlert,
       reviewClosure,

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertBadge } from "@/components/AlertBadge";
 import { AuthenticatedImage } from "@/components/AuthenticatedImage";
 import { AppScreen } from "@/components/AppScreen";
@@ -8,6 +8,9 @@ import { PhotoPicker } from "@/components/PhotoPicker";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { ScreenTitle } from "@/components/ScreenTitle";
 import { colors, fontFamily, radii, spacing } from "@/constants/theme";
+import type { AlertArea } from "@/data/mockAlerts";
+import type { AuthUser } from "@/data/mockUsers";
+import { apiRequest } from "@/features/api/apiClient";
 import { useAlerts } from "@/features/alerts/AlertProvider";
 import { usePhotoPicker } from "@/features/alerts/usePhotoPicker";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -16,13 +19,50 @@ export function ManagerAlertDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  const { alerts, acceptAlert, releaseAlert, resolveAlert, error: apiError } = useAlerts();
+  const {
+    alerts,
+    acceptAlert,
+    releaseAlert,
+    reassignAlert,
+    resolveAlert,
+    error: apiError,
+  } = useAlerts();
   const { photoUri, error, chooseFromLibrary, takePhoto } = usePhotoPicker();
   const [actionMessage, setActionMessage] = useState("");
   const [isActing, setIsActing] = useState(false);
+  const [showReassignOptions, setShowReassignOptions] = useState(false);
+  const [isAreaListOpen, setIsAreaListOpen] = useState(false);
+  const [managers, setManagers] = useState<AuthUser[]>([]);
+  const [isLoadingManagers, setIsLoadingManagers] = useState(false);
+  const [managerListError, setManagerListError] = useState("");
+  const [selectedArea, setSelectedArea] = useState<AlertArea | null>(null);
   const alert = alerts.find((item) => item.id === id);
 
-  if (!user || user.role !== "manager") {
+  useEffect(() => {
+    if (!showReassignOptions) return;
+    let active = true;
+    apiRequest<{ managers: AuthUser[] }>("/api/users/managers")
+      .then((response) => {
+        if (active) setManagers(response.managers);
+      })
+      .catch((loadError: unknown) => {
+        if (active) {
+          setManagerListError(
+            loadError instanceof Error
+              ? loadError.message
+              : "No pudimos cargar los encargados.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoadingManagers(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [showReassignOptions]);
+
+  if (!user || user.role !== "manager" || !user.area) {
     return <Redirect href="/home" />;
   }
 
@@ -35,6 +75,14 @@ export function ManagerAlertDetailScreen() {
   }
 
   const isAssignedToMe = alert.managerId === user.id;
+  const destinationManagers = Array.from(
+    new Map(
+      managers
+        .filter((manager) => manager.area && manager.area !== user.area)
+        .map((manager) => [manager.area, manager]),
+    ).values(),
+  );
+  const selectedManager = managers.find((manager) => manager.area === selectedArea);
   const handleAccept = async () => {
     setIsActing(true);
     setActionMessage("");
@@ -54,6 +102,27 @@ export function ManagerAlertDetailScreen() {
       router.replace("/manager");
     } catch (actionError) {
       setActionMessage(actionError instanceof Error ? actionError.message : "No pudimos liberar el caso.");
+    } finally {
+      setIsActing(false);
+    }
+  };
+  const handleReassign = async () => {
+    if (!selectedArea) {
+      setActionMessage("Selecciona el área que debe recibir esta alerta.");
+      return;
+    }
+
+    setIsActing(true);
+    setActionMessage("");
+    try {
+      await reassignAlert(alert.id, selectedArea);
+      router.replace("/manager");
+    } catch (actionError) {
+      setActionMessage(
+        actionError instanceof Error
+          ? actionError.message
+          : "No pudimos derivar la alerta.",
+      );
     } finally {
       setIsActing(false);
     }
@@ -112,7 +181,87 @@ export function ManagerAlertDetailScreen() {
       {alert.status === "new" ? (
         <View style={styles.actions}>
           <PrimaryButton label="Aceptar caso" onPress={handleAccept} disabled={isActing} />
-          <PrimaryButton label="No me corresponde" onPress={handleRelease} variant="outline" disabled={isActing} />
+          <PrimaryButton
+            label={showReassignOptions ? "Cancelar derivación" : "No me corresponde"}
+            onPress={() => {
+              const isOpening = !showReassignOptions;
+              if (isOpening) {
+                setIsLoadingManagers(true);
+                setManagerListError("");
+                setManagers([]);
+              }
+              setShowReassignOptions((visible) => !visible);
+              setSelectedArea(null);
+              setIsAreaListOpen(false);
+              setActionMessage("");
+            }}
+            variant="outline"
+            disabled={isActing}
+          />
+          {showReassignOptions ? (
+            <View style={styles.reassignCard}>
+              <Text style={styles.reassignTitle}>¿A qué área corresponde?</Text>
+              <Text style={styles.reassignDescription}>
+                La alerta se quitará de tu bandeja y llegará al encargado del área seleccionada.
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: isAreaListOpen }}
+                onPress={() => setIsAreaListOpen((open) => !open)}
+                style={styles.selectArea}
+              >
+                <Text style={selectedManager ? styles.selectedAreaText : styles.selectPlaceholder}>
+                  {selectedManager
+                    ? `${selectedManager.area} · ${selectedManager.name}`
+                    : "Selecciona un área"}
+                </Text>
+                <Text style={styles.dropdownIndicator}>⌄</Text>
+              </Pressable>
+              {isLoadingManagers ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : null}
+              {managerListError ? (
+                <Text accessibilityRole="alert" style={styles.errorText}>
+                  {managerListError}
+                </Text>
+              ) : null}
+              {isAreaListOpen && !isLoadingManagers && !managerListError ? (
+                destinationManagers.map((manager) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: manager.area === selectedArea }}
+                    key={manager.id}
+                    onPress={() => {
+                      if (manager.area) setSelectedArea(manager.area);
+                      setIsAreaListOpen(false);
+                    }}
+                    style={[
+                      styles.managerOption,
+                      manager.area === selectedArea && styles.managerOptionSelected,
+                    ]}
+                  >
+                    <Text style={styles.managerOptionArea}>{manager.area}</Text>
+                    <Text style={styles.managerOptionName}>
+                      {manager.name} · {manager.email}
+                    </Text>
+                  </Pressable>
+                ))
+              ) : null}
+              {!isLoadingManagers &&
+              !managerListError &&
+              isAreaListOpen &&
+              !destinationManagers.length ? (
+                <Text style={styles.errorText}>
+                  No hay encargados registrados para otras áreas.
+                </Text>
+              ) : null}
+              <PrimaryButton
+                label={selectedArea ? `Derivar a ${selectedArea}` : "Derivar alerta"}
+                onPress={handleReassign}
+                disabled={isActing || !selectedArea}
+              />
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -127,7 +276,7 @@ export function ManagerAlertDetailScreen() {
           />
           <PrimaryButton label="Marcar como resuelto" onPress={handleResolve} disabled={isActing} />
           <PrimaryButton
-            label="No me corresponde"
+            label="Liberar caso"
             onPress={handleRelease}
             variant="outline"
             disabled={isActing}
@@ -225,6 +374,74 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: spacing.md,
+  },
+  reassignCard: {
+    gap: spacing.sm,
+    borderRadius: radii.card,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+  },
+  reassignTitle: {
+    color: colors.text,
+    fontFamily: fontFamily.semiBold,
+    fontSize: 16,
+  },
+  reassignDescription: {
+    color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  selectArea: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.field,
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.md,
+  },
+  selectPlaceholder: {
+    color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+  },
+  selectedAreaText: {
+    color: colors.text,
+    fontFamily: fontFamily.medium,
+    fontSize: 14,
+  },
+  dropdownIndicator: {
+    color: colors.textSecondary,
+    fontSize: 20,
+  },
+  managerOption: {
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.field,
+    padding: spacing.sm,
+  },
+  managerOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.infoBackground,
+  },
+  managerOptionArea: {
+    color: colors.primaryDark,
+    fontFamily: fontFamily.semiBold,
+    fontSize: 14,
+  },
+  managerOptionName: {
+    color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+  },
+  errorText: {
+    color: colors.danger,
+    fontFamily: fontFamily.medium,
+    fontSize: 13,
   },
   notice: {
     color: colors.primaryDark,

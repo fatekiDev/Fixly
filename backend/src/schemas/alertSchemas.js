@@ -21,3 +21,7 @@ export const closureReviewSchema = z.object({
 export const resolveAlertSchema = z.object({
   evidenceId: z.string().regex(/^[a-f\d]{24}$/i),
 });
+
+export const reassignAlertSchema = z.object({
+  area: z.enum(["Aseo", "TI", "Mantenimiento", "Construcción"]),
+});

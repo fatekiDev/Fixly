@@ -1,3 +1,5 @@
+import type { AlertArea } from "@/data/mockAlerts";
+
 export type UserRole = "member" | "manager" | "admin";
 
 export type AuthUser = {
@@ -5,6 +7,7 @@ export type AuthUser = {
   name: string;
   email: string;
   role: UserRole;
+  area?: AlertArea;
 };
 
 export type MockAccount = {
@@ -28,6 +31,7 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
       name: "Luis Encargado",
       email: "encargado@fixly.cl",
       role: "manager",
+      area: "Mantenimiento",
     },
     password: "1234",
   },

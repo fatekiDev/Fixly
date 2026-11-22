@@ -8,6 +8,7 @@ import {
   listPendingClosures,
   listPendingModeration,
   moderateAlert,
+  reassignAlert,
   releaseAlert,
   resolveAlert,
   reviewClosure,
@@ -24,6 +25,7 @@ router.get("/moderation/pending", requireRole("admin"), listPendingModeration);
 router.get("/closures/pending", requireRole("admin"), listPendingClosures);
 router.get("/points/:userId", getMemberPoints);
 router.post("/:id/accept", requireRole("manager"), acceptAlert);
+router.post("/:id/reassign", requireRole("manager"), reassignAlert);
 router.post("/:id/release", requireRole("manager"), releaseAlert);
 router.post("/:id/resolve", requireRole("manager"), resolveAlert);
 router.post("/:id/moderation", requireRole("admin"), moderateAlert);

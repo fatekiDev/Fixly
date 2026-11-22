@@ -69,7 +69,7 @@ Para cargar las cuentas y alertas demo usadas por la app móvil:
 npm run seed-demo
 ```
 
-Las cuentas demo (`miembro@fixly.cl`, `pedro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`) usan clave `1234`. El script no elimina datos existentes y solo crea o actualiza las cuentas y alertas demo.
+Las cuentas demo (`miembro@fixly.cl`, `pedro@fixly.cl`, `aseo@fixly.cl`, `ti@fixly.cl`, `mantenimiento@fixly.cl`, `construccion@fixly.cl`, `admin@fixly.cl`) usan clave `1234`. Cada cuenta de encargado está asociada a su área. Si existe la cuenta antigua `encargado@fixly.cl`, el seed la migra a `mantenimiento@fixly.cl` conservando su identificador y contraseña. El script no elimina datos existentes y solo crea o actualiza las cuentas y alertas demo.
 
 ## Rutas
 
@@ -79,6 +79,8 @@ Todas las respuestas de error usan `{ "error": "..." }`. Las rutas protegidas re
 |---|---|---|
 | GET | `/api/health/live` | Público |
 | GET | `/api/health` | Público; estado de MongoDB |
+| GET | `/api/users` | Admin; lista usuarios con rol y área |
+| GET | `/api/users/managers` | Encargado o admin; lista encargados y áreas |
 | POST | `/api/push-tokens/register` | Autenticado; registra el token Expo del dispositivo |
 | POST | `/api/push-tokens/unregister` | Autenticado; elimina el token del dispositivo al cerrar sesión |
 | POST | `/api/uploads?kind=report\|evidence` | Miembro o encargado; multipart `file` |
@@ -90,6 +92,7 @@ Todas las respuestas de error usan `{ "error": "..." }`. Las rutas protegidas re
 | POST | `/api/alerts` | Miembro; `photoId` es opcional |
 | GET | `/api/alerts/:id` | Dueño, encargado del área o admin |
 | POST | `/api/alerts/:id/accept` | Encargado |
+| POST | `/api/alerts/:id/reassign` | Encargado; `{ "area": "TI" }`; deriva una alerta nueva a otra área |
 | POST | `/api/alerts/:id/release` | Encargado asignado |
 | POST | `/api/alerts/:id/resolve` | Encargado asignado; requiere `evidenceId` |
 | GET | `/api/alerts/moderation/pending` | Admin |

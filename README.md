@@ -127,7 +127,7 @@ Las notificaciones se envían a encargados cuando llega una alerta de su área, 
 
 Las notificaciones remotas requieren un development build; Expo Go no las admite en Android. Para iOS se necesita una cuenta Apple Developer para crear las credenciales APNs.
 
-Cuentas de prueba temporales (clave `1234`): `miembro@fixly.cl`, `encargado@fixly.cl`, `admin@fixly.cl`.
+Cuentas de prueba locales (clave `1234`): `miembro@fixly.cl`, `pedro@fixly.cl`, `aseo@fixly.cl`, `ti@fixly.cl`, `mantenimiento@fixly.cl`, `construccion@fixly.cl` y `admin@fixly.cl`. Cada cuenta de encargado solo recibe alertas de su área.
 
 ### Backend API
 

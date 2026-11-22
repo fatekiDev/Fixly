@@ -25,13 +25,13 @@ export function ManagerInboxScreen() {
   const [filter, setFilter] = useState<InboxFilter>("new");
   const [sortByUrgency, setSortByUrgency] = useState(true);
 
-  if (!user || user.role !== "manager") {
+  if (!user || user.role !== "manager" || !user.area) {
     return <Redirect href="/home" />;
   }
 
   const assignedOrNew = alerts.filter(
     (alert) =>
-      alert.area === "Mantenimiento" &&
+      alert.area === user.area &&
       (alert.status === "new" || alert.managerId === user.id),
   );
   const newAlerts = assignedOrNew.filter((alert) => alert.status === "new");
@@ -78,7 +78,7 @@ export function ManagerInboxScreen() {
     <AppScreen footer={<AppTabs active="Bandeja" tabs={managerTabs} />}>
       <ScreenTitle
         title="Bandeja"
-        subtitle={`Área: Mantenimiento · ${newAlerts.length} alertas nuevas`}
+        subtitle={`Área: ${user.area} · ${newAlerts.length} alertas nuevas`}
         action={{ label: "Cerrar sesión", onPress: handleSignOut }}
       />
       <FilterPills options={options} onSelect={setFilter} selected={filter} />

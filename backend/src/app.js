@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import pushTokenRoutes from "./routes/pushTokenRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 
@@ -50,6 +51,7 @@ export function createApp(config) {
   app.use("/api/alerts", alertRoutes);
   app.use("/api/uploads", uploadRoutes);
   app.use("/api/push-tokens", pushTokenRoutes);
+  app.use("/api/users", userRoutes);
   app.use(notFound);
   app.use(errorHandler);
   return app;

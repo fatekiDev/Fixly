@@ -8,6 +8,7 @@ import {
   closureReviewSchema,
   createAlertSchema,
   moderationSchema,
+  reassignAlertSchema,
   resolveAlertSchema,
 } from "../schemas/alertSchemas.js";
 import { closureUpdate, moderationUpdate } from "../domain/alertWorkflow.js";
@@ -152,6 +153,49 @@ export async function acceptAlert(request, response) {
     },
   );
   response.json({ alert: serializeAlert(await populateAlert(Alert.findById(alert.id))) });
+}
+
+export async function reassignAlert(request, response) {
+  const input = parseInput(reassignAlertSchema, request.body);
+  if (input.area === request.user.area) {
+    throw new HttpError(400, "Selecciona un área distinta a la actual.");
+  }
+
+  const destinationManager = await User.findOne({
+    role: "manager",
+    area: input.area,
+  }).select("_id");
+  if (!destinationManager) {
+    throw new HttpError(409, "No hay un encargado registrado para esa área.");
+  }
+
+  const alert = await Alert.findOneAndUpdate(
+    { _id: request.params.id, area: request.user.area, status: "new" },
+    { $set: { area: input.area }, $unset: { managerId: 1 } },
+    { new: true, runValidators: true },
+  );
+  if (!alert) {
+    const existingAlert = await Alert.exists({ _id: request.params.id });
+    if (!existingAlert) {
+      throw new HttpError(404, "No encontramos esta alerta.");
+    }
+    throw new HttpError(
+      409,
+      "Solo puedes derivar alertas nuevas que correspondan a tu área.",
+    );
+  }
+
+  await dispatchPushNotification(
+    { role: "manager", area: input.area },
+    {
+      title: "Alerta derivada a tu área",
+      body: `Hay una alerta pendiente en ${input.area}.`,
+      data: { alertId: alert.id, destination: "manager" },
+    },
+  );
+  response.json({
+    alert: serializeAlert(await populateAlert(Alert.findById(alert.id))),
+  });
 }
 
 export async function releaseAlert(request, response) {

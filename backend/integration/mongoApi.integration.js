@@ -155,6 +155,30 @@ test("MongoDB-backed auth, permissions, alert workflow, and points", async () =>
   const otherAreaToken = await signIn(otherAreaManager.email);
   const adminToken = await signIn(admin.email);
 
+  const usersForAdmin = await api("/api/users", { token: adminToken });
+  assert.equal(usersForAdmin.status, 200);
+  const listedManager = usersForAdmin.data.users.find(
+    (user) => user.id === manager.id,
+  );
+  assert.deepEqual(
+    { role: listedManager.role, area: listedManager.area },
+    { role: "manager", area: "Mantenimiento" },
+  );
+  assert.equal("passwordHash" in listedManager, false);
+  assert.equal("pushTokens" in listedManager, false);
+
+  const usersForManager = await api("/api/users", { token: managerToken });
+  assert.equal(usersForManager.status, 403);
+  const managersForAreaRouting = await api("/api/users/managers", {
+    token: managerToken,
+  });
+  assert.equal(managersForAreaRouting.status, 200);
+  assert.ok(
+    managersForAreaRouting.data.managers.some(
+      (user) => user.id === otherAreaManager.id && user.area === "Aseo",
+    ),
+  );
+
   const image = new FormData();
   image.append(
     "file",
@@ -210,6 +234,96 @@ test("MongoDB-backed auth, permissions, alert workflow, and points", async () =>
     token: otherAreaToken,
   });
   assert.equal(wrongAreaAccept.status, 403);
+
+  const transferAlertResponse = await api("/api/alerts", {
+    method: "POST",
+    token: memberToken,
+    body: {
+      title: "Integration misrouted alert",
+      description: "This alert was sent to the wrong service area.",
+      area: "Mantenimiento",
+      urgency: "medium",
+      location: "Laboratory 2",
+      building: "Building B",
+    },
+  });
+  assert.equal(transferAlertResponse.status, 201);
+  const transferAlertId = transferAlertResponse.data.alert.id;
+  createdAlertIds.push(transferAlertId);
+
+  const forbiddenTransfer = await api(
+    `/api/alerts/${transferAlertId}/reassign`,
+    {
+      method: "POST",
+      token: memberToken,
+      body: { area: "Aseo" },
+    },
+  );
+  assert.equal(forbiddenTransfer.status, 403);
+
+  const missingDestinationManager = await api(
+    `/api/alerts/${transferAlertId}/reassign`,
+    {
+      method: "POST",
+      token: managerToken,
+      body: { area: "Construcción" },
+    },
+  );
+  assert.equal(missingDestinationManager.status, 409);
+
+  const sameAreaTransfer = await api(
+    `/api/alerts/${transferAlertId}/reassign`,
+    {
+      method: "POST",
+      token: managerToken,
+      body: { area: "Mantenimiento" },
+    },
+  );
+  assert.equal(sameAreaTransfer.status, 400);
+
+  const transferred = await api(
+    `/api/alerts/${transferAlertId}/reassign`,
+    {
+      method: "POST",
+      token: managerToken,
+      body: { area: "Aseo" },
+    },
+  );
+  assert.equal(transferred.status, 200);
+  assert.equal(transferred.data.alert.area, "Aseo");
+  assert.equal(transferred.data.alert.status, "new");
+  assert.equal(transferred.data.alert.managerId, undefined);
+
+  const maintenanceInbox = await api("/api/alerts", { token: managerToken });
+  assert.equal(
+    maintenanceInbox.data.alerts.some((alert) => alert.id === transferAlertId),
+    false,
+  );
+  const aseoInbox = await api("/api/alerts", { token: otherAreaToken });
+  assert.ok(
+    aseoInbox.data.alerts.some((alert) => alert.id === transferAlertId),
+  );
+
+  const formerAreaAccess = await api(`/api/alerts/${transferAlertId}`, {
+    token: managerToken,
+  });
+  assert.equal(formerAreaAccess.status, 403);
+
+  const transferredAccept = await api(
+    `/api/alerts/${transferAlertId}/accept`,
+    { method: "POST", token: otherAreaToken },
+  );
+  assert.equal(transferredAccept.status, 200);
+  assert.equal(transferredAccept.data.alert.managerId, otherAreaManager.id);
+  const inProgressTransfer = await api(
+    `/api/alerts/${transferAlertId}/reassign`,
+    {
+      method: "POST",
+      token: otherAreaToken,
+      body: { area: "Mantenimiento" },
+    },
+  );
+  assert.equal(inProgressTransfer.status, 409);
 
   const forbiddenImage = await api(uploadedPhoto.data.url, { token: otherAreaToken });
   assert.equal(forbiddenImage.status, 403);
