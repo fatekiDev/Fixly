@@ -33,7 +33,7 @@ Este documento detalla el uso de herramientas de Inteligencia Artificial (GitHub
 
 
 > Captura de la ejecución limpia de `npx tsc --noEmit` y `npm run lint` sin errores.*
-![Validación de TypeScript y ESLint](docs/evidencia_ia/cap1.png)
+![Validación de TypeScript y ESLint](cap1.png)
 
 ---
 
@@ -44,7 +44,7 @@ Este documento detalla el uso de herramientas de Inteligencia Artificial (GitHub
 
 > **[ESPACIO PARA CAPTURA 4]**
 > *Descripción sugerida: Captura de la pantalla de Login en el emulador o vista previa de la estructura de carpetas implementada.*
-![Implementación de Login y estructura](docs/evidencia_ia/cap2.png)
+![Implementación de Login y estructura](cap2.png)
 
 ---
 
