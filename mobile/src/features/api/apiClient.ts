@@ -1,13 +1,32 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import { fetch as expoFetch } from "expo/fetch";
 import { File } from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 
 const TOKEN_KEY = "fixly.auth.token";
+const API_PORT = 3000;
 const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+
+// En desarrollo la API corre en el mismo computador que Expo (Metro).
+// Expo expone la IP de ese computador en hostUri ("192.168.x.x:8081"),
+// así que la usamos para no tener que editar la IP en cada red nueva.
+function detectDevApiUrl() {
+  if (Platform.OS === "web") {
+    const hostname = globalThis.location?.hostname;
+    return hostname ? `http://${hostname}:${API_PORT}` : null;
+  }
+  const hostUri = Constants.expoConfig?.hostUri;
+  const host = hostUri?.split(":")[0];
+  return host ? `http://${host}:${API_PORT}` : null;
+}
+
 export const API_URL =
   configuredUrl ||
-  (Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000");
+  detectDevApiUrl() ||
+  (Platform.OS === "android"
+    ? `http://10.0.2.2:${API_PORT}`
+    : `http://localhost:${API_PORT}`);
 
 export type ApiError = Error & { status?: number };
 
